@@ -1,5 +1,5 @@
 export interface User {
-  id: string;
+  id: number;
   name: string;
   email: string;
   phone?: string;
@@ -23,14 +23,7 @@ export interface RegisterRequest {
   password?: string;
 }
 
-export interface ApiResponse<T> {
-  success: boolean;
-  message?: string;
-  data?: T;
-}
-
 export interface ApiError {
   message: string;
   status?: number;
-  errors?: Record<string, string>;
 }

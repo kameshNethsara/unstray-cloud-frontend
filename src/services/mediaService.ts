@@ -1,7 +1,7 @@
 import api from './api';
 import type { MediaUploadResponse } from '../types/media';
 
-const USE_MOCK = import.meta.env.VITE_USE_MOCK_API === 'true';
+const USE_MOCK = import.meta.env.VITE_USE_MOCK_API;
 const delay = (ms = 400) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const mediaService = {

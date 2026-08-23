@@ -65,7 +65,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate('/login');
     setIsMobileMenuOpen(false);
   };
 

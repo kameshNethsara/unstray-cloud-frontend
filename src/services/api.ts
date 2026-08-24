@@ -1,13 +1,14 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081',
+  // This should point to your Spring Cloud Gateway: http://localhost:8080
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Interceptor for attaching Authorization JWT Bearer Token
+// Interceptor to attach Bearer Token to request headers
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('unstray_token');
@@ -16,20 +17,27 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
-// Global Error Interceptor for handling 401 Unauthorized
+// Interceptor to handle global errors (e.g. 401 Unauthorized redirect)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     const { response } = error;
-    if (response && response.status === 401) {
-      localStorage.removeItem('unstray_token');
-      localStorage.removeItem('unstray_user');
-      if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login?expired=true';
+    if (response) {
+      if (response.status === 401) {
+        localStorage.removeItem('unstray_token');
+        localStorage.removeItem('unstray_user');
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login?expired=true';
+        }
       }
+    } else {
+      // Network errors (e.g., Gateway is down)
+      console.error('Network Error / Server Unreachable:', error.message);
     }
     return Promise.reject(error);
   }

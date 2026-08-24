@@ -727,3 +727,795 @@ const Home: React.FC = () => {
 };
 
 export default Home;
+
+// import React, { useEffect, useState } from "react";
+// import {
+//   Typography,
+//   Input,
+//   Button,
+//   Row,
+//   Col,
+//   Space,
+//   Card,
+//   Skeleton,
+// } from "antd";
+// import { useNavigate, Link } from "react-router-dom";
+// import {
+//   Search as SearchIcon,
+//   PlusCircle,
+//   ArrowRight,
+//   ShieldCheck,
+//   Sparkles,
+//   Users,
+//   Zap,
+//   HeartHandshake,
+//   Tag as TagIcon,
+// } from "lucide-react";
+// import { itemService } from "../../services/itemService";
+// import type { Item } from "../../types/item";
+// import ItemCard from "../../components/items/ItemCard";
+// // import EmptyState from "../../components/common/EmptyState";
+// import ErrorState from "../../components/common/ErrorState";
+
+// const { Title, Paragraph, Text } = Typography;
+
+// /**
+//  * ───────────────────────────────────────────────────────────
+//  *  DESIGN TOKENS — "Lost Property Office" identity
+//  * ───────────────────────────────────────────────────────────
+//  */
+// const ink = "#20303A";       // primary text / stamped ink
+// const inkSoft = "#4B5D67";   // secondary ink
+// const paper = "#EDE6D6";     // registry paper background
+// const paperLight = "#F8F4E9"; // card / ticket paper
+// const paperDeep = "#E2D8C1"; // recessed paper (skeletons, wells)
+// const claimRed = "#A23E2E";  // LOST tag / alert highlight
+// const claimGreen = "#3E6C52"; // FOUND tag / success highlight
+// const brass = "#A9884F";     // grommet / hardware accent
+
+// const displayFont = "'Zilla Slab', 'Roboto Slab', Georgia, serif";
+// const monoFont = "'IBM Plex Mono', 'Roboto Mono', monospace";
+// const bodyFont = "'Inter', 'Work Sans', system-ui, sans-serif";
+
+// const paperTexture =
+//   "repeating-linear-gradient(135deg, rgba(32,48,58,0.025) 0px, rgba(32,48,58,0.025) 1px, transparent 1px, transparent 10px)";
+
+// const Home: React.FC = () => {
+//   const navigate = useNavigate();
+//   const [recentItems, setRecentItems] = useState<Item[]>([]);
+//   const [isLoading, setIsLoading] = useState<boolean>(true);
+//   const [hasError, setHasError] = useState<boolean>(false);
+//   const [searchVal, setSearchVal] = useState<string>("");
+
+//   useEffect(() => {
+//     const fetchRecentItems = async () => {
+//       try {
+//         setIsLoading(true);
+//         // Get newest open items (limited to 4)
+//         const items = await itemService.getItems({ status: "OPEN" });
+//         setRecentItems(items.slice(0, 4));
+//       } catch (err) {
+//         console.error("Failed to load recent items:", err);
+//         setHasError(true);
+//       } finally {
+//         setIsLoading(false);
+//       }
+//     };
+
+//     fetchRecentItems();
+//   }, []);
+
+//   const handleSearchSubmit = () => {
+//     if (searchVal.trim()) {
+//       navigate(`/items?search=${encodeURIComponent(searchVal.trim())}`);
+//     } else {
+//       navigate("/items");
+//     }
+//   };
+
+//   return (
+//     <div 
+//       style={{ 
+//         width: "100%", 
+//         minHeight: "100vh", 
+//         backgroundColor: paper, 
+//         backgroundImage: paperTexture, 
+//         fontFamily: bodyFont 
+//       }}
+//     >
+//       {/* 1. HERO SECTION */}
+//       <section
+//         style={{
+//           backgroundColor: paperLight,
+//           padding: "80px 24px",
+//           textAlign: "center",
+//           borderBottom: `2px solid ${ink}`,
+//           display: "flex",
+//           flexDirection: "column",
+//           alignItems: "center",
+//           justifyContent: "center",
+//           boxShadow: `0px 4px 0px ${paperDeep}`,
+//         }}
+//       >
+//         <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+//           <Space align="center" style={{ marginBottom: "16px" }}>
+//             <span
+//               style={{
+//                 backgroundColor: paper,
+//                 color: ink,
+//                 padding: "6px 14px",
+//                 borderRadius: 0,
+//                 fontSize: "12px",
+//                 fontWeight: 700,
+//                 fontFamily: monoFont,
+//                 letterSpacing: "1.5px",
+//                 textTransform: "uppercase",
+//                 border: `1.5px solid ${ink}`,
+//                 boxShadow: `2px 2px 0px ${brass}`,
+//                 display: "inline-flex",
+//                 alignItems: "center",
+//                 gap: "6px",
+//               }}
+//             >
+//               <Sparkles size={13} style={{ color: brass }} />
+//               Unstray Registry — Reconnecting Property Instantly
+//             </span>
+//           </Space>
+
+//           <Title
+//             level={1}
+//             style={{
+//               fontSize: "46px",
+//               fontWeight: 800,
+//               color: ink,
+//               fontFamily: displayFont,
+//               textTransform: "uppercase",
+//               marginBottom: "16px",
+//               lineHeight: 1.1,
+//               letterSpacing: "-0.5px",
+//             }}
+//           >
+//             Lost Something? Found Something?
+//           </Title>
+
+//           <Paragraph
+//             style={{
+//               fontSize: "17px",
+//               color: inkSoft,
+//               marginBottom: "40px",
+//               lineHeight: 1.6,
+//               fontFamily: bodyFont,
+//               maxWidth: "680px",
+//               margin: "0 auto 40px auto",
+//             }}
+//           >
+//             Unstray is a structured public property registry built to help campus and
+//             local communities log, trace, and return misplaced personal belongings securely.
+//           </Paragraph>
+
+//           {/* QUICK SEARCH INPUT */}
+//           <div
+//             style={{
+//               maxWidth: "640px",
+//               margin: "0 auto 40px auto",
+//               boxShadow: `6px 6px 0px ${ink}`,
+//               borderRadius: 0,
+//               overflow: "hidden",
+//               backgroundColor: paper,
+//               border: `2px solid ${ink}`,
+//               padding: "6px",
+//             }}
+//           >
+//             <Input
+//               size="large"
+//               placeholder="Search registry (e.g. phone, wallet, keys, ID card)..."
+//               value={searchVal}
+//               onChange={(e) => setSearchVal(e.target.value)}
+//               onPressEnter={handleSearchSubmit}
+//               prefix={
+//                 <SearchIcon
+//                   size={18}
+//                   style={{ color: inkSoft, marginLeft: "8px" }}
+//                 />
+//               }
+//               suffix={
+//                 <Button
+//                   type="primary"
+//                   size="large"
+//                   onClick={handleSearchSubmit}
+//                   style={{ 
+//                     fontWeight: 700, 
+//                     fontFamily: monoFont,
+//                     fontSize: "12px",
+//                     textTransform: "uppercase",
+//                     letterSpacing: "1px",
+//                     padding: "0 24px", 
+//                     height: "42px",
+//                     backgroundColor: ink,
+//                     borderColor: ink,
+//                     color: paperLight,
+//                     borderRadius: 0,
+//                     boxShadow: `2px 2px 0px ${brass}`,
+//                   }}
+//                 >
+//                   Search Registry
+//                 </Button>
+//               }
+//               bordered={false}
+//               style={{ padding: "4px 8px", fontFamily: bodyFont, color: ink }}
+//             />
+//           </div>
+
+//           {/* CALL TO ACTION BUTTONS */}
+//           <Row gutter={[16, 16]} justify="center">
+//             <Col>
+//               <Link to="/report/lost">
+//                 <Button
+//                   type="primary"
+//                   danger
+//                   size="large"
+//                   icon={<PlusCircle size={18} style={{ marginRight: "6px" }} />}
+//                   style={{
+//                     minWidth: "190px",
+//                     height: "48px",
+//                     fontWeight: 700,
+//                     fontSize: "13px",
+//                     fontFamily: monoFont,
+//                     textTransform: "uppercase",
+//                     letterSpacing: "1px",
+//                     backgroundColor: claimRed,
+//                     borderColor: claimRed,
+//                     color: paperLight,
+//                     borderRadius: 0,
+//                     boxShadow: `4px 4px 0px ${ink}`,
+//                   }}
+//                 >
+//                   Report Lost Item
+//                 </Button>
+//               </Link>
+//             </Col>
+//             <Col>
+//               <Link to="/report/found">
+//                 <Button
+//                   type="primary"
+//                   size="large"
+//                   icon={<PlusCircle size={18} style={{ marginRight: "6px" }} />}
+//                   style={{
+//                     minWidth: "190px",
+//                     height: "48px",
+//                     fontWeight: 700,
+//                     fontSize: "13px",
+//                     fontFamily: monoFont,
+//                     textTransform: "uppercase",
+//                     letterSpacing: "1px",
+//                     backgroundColor: claimGreen,
+//                     borderColor: claimGreen,
+//                     color: paperLight,
+//                     borderRadius: 0,
+//                     boxShadow: `4px 4px 0px ${ink}`,
+//                   }}
+//                 >
+//                   Report Found Item
+//                 </Button>
+//               </Link>
+//             </Col>
+//             <Col xs={24} sm="auto">
+//               <Link to="/items">
+//                 <Button
+//                   type="default"
+//                   size="large"
+//                   icon={<ArrowRight size={18} style={{ marginLeft: "4px" }} />}
+//                   style={{
+//                     minWidth: "170px",
+//                     height: "48px",
+//                     fontWeight: 700,
+//                     fontSize: "13px",
+//                     fontFamily: monoFont,
+//                     textTransform: "uppercase",
+//                     letterSpacing: "1px",
+//                     backgroundColor: paper,
+//                     borderColor: ink,
+//                     color: ink,
+//                     borderRadius: 0,
+//                     boxShadow: `4px 4px 0px ${ink}`,
+//                     display: "flex",
+//                     alignItems: "center",
+//                     justifyContent: "center",
+//                     gap: "6px",
+//                   }}
+//                 >
+//                   Browse Registry
+//                 </Button>
+//               </Link>
+//             </Col>
+//           </Row>
+//         </div>
+//       </section>
+
+//       {/* 2. RECENTLY REPORTED ITEMS */}
+//       <section
+//         style={{ maxWidth: "1200px", margin: "0 auto", padding: "64px 24px" }}
+//       >
+//         <div
+//           style={{
+//             display: "flex",
+//             justifyContent: "space-between",
+//             alignItems: "flex-end",
+//             marginBottom: "32px",
+//             borderBottom: `1px dashed ${inkSoft}`,
+//             paddingBottom: "16px"
+//           }}
+//         >
+//           <div>
+//             <div
+//               style={{
+//                 display: "inline-flex",
+//                 alignItems: "center",
+//                 gap: "6px",
+//                 fontFamily: monoFont,
+//                 fontSize: "11px",
+//                 letterSpacing: "1px",
+//                 color: inkSoft,
+//                 textTransform: "uppercase",
+//                 marginBottom: "4px",
+//               }}
+//             >
+//               <TagIcon size={12} style={{ color: brass }} />
+//               Latest Docket Logs
+//             </div>
+//             <Title
+//               level={2}
+//               style={{ margin: 0, fontWeight: 700, color: ink, fontFamily: displayFont, textTransform: "uppercase" }}
+//             >
+//               Recently Reported
+//             </Title>
+//             <Paragraph style={{ color: inkSoft, margin: "4px 0 0 0", fontFamily: bodyFont }}>
+//               Latest open item reports logged in the registry network.
+//             </Paragraph>
+//           </div>
+//           <Link
+//             to="/items"
+//             style={{
+//               fontWeight: 700,
+//               fontFamily: monoFont,
+//               fontSize: "12px",
+//               textTransform: "uppercase",
+//               color: ink,
+//               display: "flex",
+//               alignItems: "center",
+//               gap: "6px",
+//               textDecoration: "underline",
+//             }}
+//           >
+//             View All Files <ArrowRight size={15} />
+//           </Link>
+//         </div>
+
+//         {isLoading ? (
+//           <Row gutter={[24, 24]}>
+//             {[1, 2, 3, 4].map((n) => (
+//               <Col key={n} xs={24} sm={12} lg={6}>
+//                 <div style={{ backgroundColor: paperDeep, padding: "16px", border: `1px solid ${paperDeep}` }}>
+//                   <Skeleton.Image
+//                     style={{
+//                       width: "100%",
+//                       height: "180px",
+//                       marginBottom: "16px",
+//                     }}
+//                     active
+//                   />
+//                   <Skeleton active paragraph={{ rows: 2 }} />
+//                 </div>
+//               </Col>
+//             ))}
+//           </Row>
+//         ) : hasError ? (
+//           <ErrorState message="Could not fetch recently reported items. Make sure API Gateway is accessible or mock mode is toggled." />
+//         ) : recentItems.length === 0 ? (
+//           <div 
+//             style={{ 
+//               textAlign: "center", 
+//               padding: "48px 24px", 
+//               background: paperLight, 
+//               border: `2px dashed ${ink}`,
+//               boxShadow: `4px 4px 0px ${paperDeep}`
+//             }}
+//           >
+//             <Paragraph style={{ color: inkSoft, fontSize: "15px", marginBottom: "20px", fontFamily: bodyFont }}>
+//               No active items listed right now. Would you like to log a new report?
+//             </Paragraph>
+//             <Space size="middle">
+//               <Button
+//                 type="primary"
+//                 danger
+//                 size="large"
+//                 onClick={() => navigate("/report/lost")}
+//                 style={{ 
+//                   fontWeight: 700, 
+//                   fontFamily: monoFont, 
+//                   fontSize: "12px", 
+//                   textTransform: "uppercase",
+//                   borderRadius: 0,
+//                   backgroundColor: claimRed,
+//                   borderColor: claimRed,
+//                   boxShadow: `2px 2px 0px ${ink}`
+//                 }}
+//               >
+//                 Report Lost Item
+//               </Button>
+//               <Button
+//                 type="primary"
+//                 size="large"
+//                 onClick={() => navigate("/report/found")}
+//                 style={{ 
+//                   fontWeight: 700, 
+//                   fontFamily: monoFont, 
+//                   fontSize: "12px", 
+//                   textTransform: "uppercase",
+//                   borderRadius: 0,
+//                   backgroundColor: claimGreen, 
+//                   borderColor: claimGreen,
+//                   boxShadow: `2px 2px 0px ${ink}`
+//                 }}
+//               >
+//                 Report Found Item
+//               </Button>
+//             </Space>
+//           </div>
+//         ) : (
+//           <Row gutter={[24, 24]}>
+//             {recentItems.map((item) => (
+//               <Col key={item.id} xs={24} sm={12} lg={6}>
+//                 <ItemCard item={item} />
+//               </Col>
+//             ))}
+//           </Row>
+//         )}
+//       </section>
+
+//       {/* 3. HOW IT WORKS */}
+//       <section
+//         id="how"
+//         style={{
+//           backgroundColor: paperLight,
+//           borderTop: `2px solid ${ink}`,
+//           borderBottom: `2px solid ${ink}`,
+//           padding: "64px 24px",
+//         }}
+//       >
+//         <div
+//           style={{ maxWidth: "1200px", margin: "0 auto", textAlign: "center" }}
+//         >
+//           <Title
+//             level={2}
+//             style={{ fontWeight: 700, color: ink, fontFamily: displayFont, textTransform: "uppercase", marginBottom: "8px" }}
+//           >
+//             How Unstray Works
+//           </Title>
+//           <Paragraph
+//             style={{
+//               color: inkSoft,
+//               maxWidth: "600px",
+//               margin: "0 auto 48px auto",
+//               fontFamily: bodyFont,
+//               fontSize: "15px",
+//             }}
+//           >
+//             A clear, three-step record system for community item retrieval.
+//           </Paragraph>
+
+//           <Row gutter={[32, 32]}>
+//             <Col xs={24} md={8}>
+//               <Card
+//                 bordered={false}
+//                 style={{
+//                   background: paper,
+//                   border: `2px solid ${ink}`,
+//                   borderRadius: 0,
+//                   boxShadow: `6px 6px 0px ${ink}`,
+//                   height: "100%",
+//                   padding: "16px",
+//                   textAlign: "left"
+//                 }}
+//               >
+//                 <div
+//                   style={{
+//                     width: "48px",
+//                     height: "48px",
+//                     border: `1.5px solid ${ink}`,
+//                     backgroundColor: paperLight,
+//                     color: ink,
+//                     display: "flex",
+//                     alignItems: "center",
+//                     justifyContent: "center",
+//                     marginBottom: "20px",
+//                     fontFamily: monoFont,
+//                     fontWeight: 700,
+//                   }}
+//                 >
+//                   <PlusCircle size={24} style={{ color: claimRed }} />
+//                 </div>
+//                 <Title level={4} style={{ fontFamily: displayFont, color: ink, textTransform: "uppercase" }}>
+//                   1. Publish a Docket
+//                 </Title>
+//                 <Paragraph style={{ color: inkSoft, fontSize: "14px", fontFamily: bodyFont }}>
+//                   Log a report detailing what was lost or found. File categories, location tags, descriptions, and attach supporting photographs.
+//                 </Paragraph>
+//               </Card>
+//             </Col>
+//             <Col xs={24} md={8}>
+//               <Card
+//                 bordered={false}
+//                 style={{
+//                   background: paper,
+//                   border: `2px solid ${ink}`,
+//                   borderRadius: 0,
+//                   boxShadow: `6px 6px 0px ${ink}`,
+//                   height: "100%",
+//                   padding: "16px",
+//                   textAlign: "left"
+//                 }}
+//               >
+//                 <div
+//                   style={{
+//                     width: "48px",
+//                     height: "48px",
+//                     border: `1.5px solid ${ink}`,
+//                     backgroundColor: paperLight,
+//                     color: ink,
+//                     display: "flex",
+//                     alignItems: "center",
+//                     justifyContent: "center",
+//                     marginBottom: "20px",
+//                     fontFamily: monoFont,
+//                     fontWeight: 700,
+//                   }}
+//                 >
+//                   <SearchIcon size={24} style={{ color: brass }} />
+//                 </div>
+//                 <Title level={4} style={{ fontFamily: displayFont, color: ink, textTransform: "uppercase" }}>
+//                   2. Search &amp; Filter
+//                 </Title>
+//                 <Paragraph style={{ color: inkSoft, fontSize: "14px", fontFamily: bodyFont }}>
+//                   Search through active index records using filters for category, status, type, or location keywords to pinpoint matching listings.
+//                 </Paragraph>
+//               </Card>
+//             </Col>
+//             <Col xs={24} md={8}>
+//               <Card
+//                 bordered={false}
+//                 style={{
+//                   background: paper,
+//                   border: `2px solid ${ink}`,
+//                   borderRadius: 0,
+//                   boxShadow: `6px 6px 0px ${ink}`,
+//                   height: "100%",
+//                   padding: "16px",
+//                   textAlign: "left"
+//                 }}
+//               >
+//                 <div
+//                   style={{
+//                     width: "48px",
+//                     height: "48px",
+//                     border: `1.5px solid ${ink}`,
+//                     backgroundColor: paperLight,
+//                     color: ink,
+//                     display: "flex",
+//                     alignItems: "center",
+//                     justifyContent: "center",
+//                     marginBottom: "20px",
+//                     fontFamily: monoFont,
+//                     fontWeight: 700,
+//                   }}
+//                 >
+//                   <HeartHandshake size={24} style={{ color: claimGreen }} />
+//                 </div>
+//                 <Title level={4} style={{ fontFamily: displayFont, color: ink, textTransform: "uppercase" }}>
+//                   3. Verify &amp; Return
+//                 </Title>
+//                 <Paragraph style={{ color: inkSoft, fontSize: "14px", fontFamily: bodyFont }}>
+//                   Connect with record holders, submit verification proof for lost property, arrange safe handoffs, and mark case status as resolved.
+//                 </Paragraph>
+//               </Card>
+//             </Col>
+//           </Row>
+//         </div>
+//       </section>
+
+//       {/* 4. WHY CHOOSE UNSTRAY */}
+//       <section
+//         style={{ maxWidth: "1200px", margin: "0 auto", padding: "80px 24px" }}
+//       >
+//         <Row gutter={[48, 32]} align="middle">
+//           <Col xs={24} md={12}>
+//             <div
+//               style={{
+//                 width: "100%",
+//                 borderRadius: 0,
+//                 overflow: "hidden",
+//                 border: `2px solid ${ink}`,
+//                 boxShadow: `8px 8px 0px ${ink}`,
+//                 backgroundColor: paperDeep,
+//               }}
+//             >
+//               <img
+//                 src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&auto=format&fit=crop&q=80"
+//                 alt="Community connection and returning lost items"
+//                 style={{ width: "100%", display: "block", filter: "contrast(1.02)" }}
+//               />
+//             </div>
+//           </Col>
+//           <Col xs={24} md={12}>
+//             <div>
+//               <Title
+//                 level={2}
+//                 style={{
+//                   fontWeight: 800,
+//                   color: ink,
+//                   fontFamily: displayFont,
+//                   textTransform: "uppercase",
+//                   marginBottom: "20px",
+//                   lineHeight: 1.15
+//                 }}
+//               >
+//                 A Trustworthy &amp; Structured Network for Returns
+//               </Title>
+//               <Paragraph
+//                 style={{
+//                   fontSize: "15px",
+//                   color: inkSoft,
+//                   lineHeight: 1.6,
+//                   marginBottom: "28px",
+//                   fontFamily: bodyFont
+//                 }}
+//               >
+//                 Disorganized social media threads and physical cork boards lead to lost property being forgotten. Unstray structures lost and found data in an organized, searchable registry.
+//               </Paragraph>
+
+//               <Space
+//                 direction="vertical"
+//                 size="large"
+//                 style={{ width: "100%" }}
+//               >
+//                 <div style={{ display: "flex", gap: "16px" }}>
+//                   <div style={{ color: ink, marginTop: "2px", border: `1.5px solid ${ink}`, padding: "6px", backgroundColor: paperLight }}>
+//                     <ShieldCheck size={20} style={{ color: brass }} />
+//                   </div>
+//                   <div>
+//                     <Text strong style={{ fontSize: "15px", fontFamily: displayFont, color: ink, textTransform: "uppercase" }}>
+//                       Authenticated Account File
+//                     </Text>
+//                     <Paragraph
+//                       style={{
+//                         color: inkSoft,
+//                         margin: "2px 0 0 0",
+//                         fontSize: "14px",
+//                         fontFamily: bodyFont,
+//                       }}
+//                     >
+//                       Inquiries and claim filings occur exclusively through registered user accounts to prevent spammers and fake listings.
+//                     </Paragraph>
+//                   </div>
+//                 </div>
+
+//                 <div style={{ display: "flex", gap: "16px" }}>
+//                   <div style={{ color: ink, marginTop: "2px", border: `1.5px solid ${ink}`, padding: "6px", backgroundColor: paperLight }}>
+//                     <Zap size={20} style={{ color: claimGreen }} />
+//                   </div>
+//                   <div>
+//                     <Text strong style={{ fontSize: "15px", fontFamily: displayFont, color: ink, textTransform: "uppercase" }}>
+//                       Real-time Case Resolution
+//                     </Text>
+//                     <Paragraph
+//                       style={{
+//                         color: inkSoft,
+//                         margin: "2px 0 0 0",
+//                         fontSize: "14px",
+//                         fontFamily: bodyFont,
+//                       }}
+//                     >
+//                       Case files toggle to "Resolved" as soon as ownership is confirmed, keeping public index searches current and accurate.
+//                     </Paragraph>
+//                   </div>
+//                 </div>
+
+//                 <div style={{ display: "flex", gap: "16px" }}>
+//                   <div style={{ color: ink, marginTop: "2px", border: `1.5px solid ${ink}`, padding: "6px", backgroundColor: paperLight }}>
+//                     <Users size={20} style={{ color: claimRed }} />
+//                   </div>
+//                   <div>
+//                     <Text strong style={{ fontSize: "15px", fontFamily: displayFont, color: ink, textTransform: "uppercase" }}>
+//                       Community-Centered Directory
+//                     </Text>
+//                     <Paragraph
+//                       style={{
+//                         color: inkSoft,
+//                         margin: "2px 0 0 0",
+//                         fontSize: "14px",
+//                         fontFamily: bodyFont,
+//                       }}
+//                     >
+//                       Tailored layout for universities, housing hubs, campus blocks, municipal departments, and localized communities.
+//                     </Paragraph>
+//                   </div>
+//                 </div>
+//               </Space>
+//             </div>
+//           </Col>
+//         </Row>
+//       </section>
+
+//       {/* 5. CALL TO ACTION BANNER */}
+//       <section
+//         style={{
+//           backgroundColor: ink,
+//           padding: "64px 24px",
+//           color: paperLight,
+//           textAlign: "center",
+//           borderTop: `2px solid ${ink}`,
+//           backgroundImage: paperTexture,
+//         }}
+//       >
+//         <div style={{ maxWidth: "700px", margin: "0 auto" }}>
+//           <Title
+//             level={2}
+//             style={{ color: paperLight, fontWeight: 800, fontFamily: displayFont, textTransform: "uppercase", marginBottom: "16px" }}
+//           >
+//             Lost Something on Campus or in Town?
+//           </Title>
+//           <Paragraph
+//             style={{ color: paperDeep, fontSize: "16px", marginBottom: "32px", fontFamily: bodyFont }}
+//           >
+//             Do not lose hope. Log a docket report, describe distinguishing traits, and leverage community eyes. Unstray is here to trace your belongings.
+//           </Paragraph>
+//           <Space size="middle">
+//             <Link to="/report/lost">
+//               <Button
+//                 type="primary"
+//                 size="large"
+//                 style={{ 
+//                   fontWeight: 700, 
+//                   fontFamily: monoFont, 
+//                   fontSize: "12px", 
+//                   textTransform: "uppercase",
+//                   padding: "0 28px", 
+//                   height: "46px",
+//                   borderRadius: 0,
+//                   backgroundColor: claimRed,
+//                   borderColor: claimRed,
+//                   color: paperLight,
+//                   boxShadow: `3px 3px 0px ${brass}`
+//                 }}
+//               >
+//                 Start Lost Report
+//               </Button>
+//             </Link>
+//             <Link to="/items">
+//               <Button
+//                 size="large"
+//                 style={{ 
+//                   fontWeight: 700, 
+//                   fontFamily: monoFont, 
+//                   fontSize: "12px", 
+//                   textTransform: "uppercase",
+//                   padding: "0 28px", 
+//                   height: "46px",
+//                   borderRadius: 0,
+//                   backgroundColor: paper,
+//                   borderColor: paper,
+//                   color: ink,
+//                   boxShadow: `3px 3px 0px ${brass}`
+//                 }}
+//               >
+//                 Browse Registry
+//               </Button>
+//             </Link>
+//           </Space>
+//         </div>
+//       </section>
+//     </div>
+//   );
+// };
+
+// export default Home;

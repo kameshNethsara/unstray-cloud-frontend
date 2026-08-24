@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Avatar, Form, Input, Typography, message, Row, Col } from 'antd';
-import { User, Mail, Phone, Calendar, Edit3, ShieldAlert, IdCard } from 'lucide-react';
+import { Card, Descriptions, Avatar, Button, Modal, Form, Input, Typography, message, Row, Col } from 'antd';
+import { User, Mail, Phone, Calendar, Edit3, ShieldAlert, Tag } from 'lucide-react';
 import dayjs from 'dayjs';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -8,15 +8,15 @@ const { Title, Text, Paragraph } = Typography;
 
 /**
  * ───────────────────────────────────────────────────────────
- * DESIGN TOKENS — "Lost Property Office" identity
+ *  DESIGN TOKENS — "Lost Property Office" identity
  * ───────────────────────────────────────────────────────────
  */
 const ink = "#20303A";       // primary text / stamped ink
 const inkSoft = "#4B5D67";   // secondary ink
 const paper = "#EDE6D6";     // registry paper background
 const paperLight = "#F8F4E9"; // card / ticket paper
-const paperDeep = "#E2D8C1"; // recessed paper
-const claimRed = "#A23E2E";  // LOST tag accent
+// const paperDeep = "#E2D8C1"; // recessed paper (skeletons, wells)
+const claimRed = "#A23E2E";  // LOST tag / alert highlight
 const brass = "#A9884F";     // grommet / hardware accent
 
 const displayFont = "'Zilla Slab', 'Roboto Slab', Georgia, serif";
@@ -35,29 +35,29 @@ const Profile: React.FC = () => {
 
   if (!user) {
     return (
-      <div 
-        style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center',
-          minHeight: '60vh',
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          padding: '60px',
           backgroundColor: paper,
           backgroundImage: paperTexture,
-          padding: '60px',
-          fontFamily: bodyFont 
+          minHeight: '60vh',
+          alignItems: 'center',
+          fontFamily: bodyFont,
         }}
       >
         <div
           style={{
-            padding: '32px 24px',
             backgroundColor: paperLight,
             border: `2px solid ${ink}`,
+            padding: '24px 32px',
             boxShadow: `4px 4px 0px ${ink}`,
-            textAlign: 'center'
+            textAlign: 'center',
           }}
         >
-          <Text style={{ fontFamily: monoFont, fontSize: '13px', color: inkSoft, textTransform: 'uppercase' }}>
-            AUTHORIZATION REQUIRED // PLEASE LOG IN TO ACCESS PROFILE FILE.
+          <Text style={{ color: inkSoft, fontFamily: monoFont, fontSize: '15px' }}>
+            Please log in to view this claim file.
           </Text>
         </div>
       </div>
@@ -82,10 +82,10 @@ const Profile: React.FC = () => {
         phone: values.phone,
       };
 
-      // Update in AuthContext/localStorage
+      // Save in AuthContext/localStorage
       updateUserContext(updatedUser);
       
-      message.success('Filer credentials updated successfully!');
+      message.success('Profile updated successfully!');
       setIsEditModalOpen(false);
     } catch (err: any) {
       message.error('Failed to update profile details.');
@@ -95,77 +95,78 @@ const Profile: React.FC = () => {
   };
 
   return (
-    <div 
-      style={{ 
-        width: '100%', 
+    <div
+      style={{
+        width: '100%',
         minHeight: '100vh',
-        backgroundColor: paper, 
+        backgroundColor: paper,
         backgroundImage: paperTexture,
-        padding: '36px 24px 88px 24px', 
-        fontFamily: bodyFont 
+        padding: '48px 24px 80px 24px',
+        fontFamily: bodyFont,
       }}
     >
-      <div style={{ maxWidth: '960px', margin: '0 auto' }}>
-        
+      <div
+        style={{
+          maxWidth: '920px',
+          margin: '0 auto',
+        }}
+      >
         {/* HEADER SECTION */}
-        <div 
-          style={{ 
-            borderBottom: `2px solid ${ink}`, 
-            paddingBottom: '20px', 
-            marginBottom: '32px' 
-          }}
-        >
-          <div 
-            style={{ 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              gap: '8px', 
-              fontFamily: monoFont, 
-              fontSize: '11px', 
-              letterSpacing: '1.5px', 
-              color: inkSoft, 
+        <div style={{ marginBottom: '32px' }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontFamily: monoFont,
+              fontSize: '12px',
+              letterSpacing: '1.5px',
+              color: inkSoft,
               textTransform: 'uppercase',
-              marginBottom: '6px' 
+              marginBottom: '12px',
+              paddingBottom: '4px',
+              borderBottom: `1px dashed ${inkSoft}`,
             }}
           >
-            <IdCard size={14} style={{ color: brass }} />
-            Official Filer Identity Card
+            <Tag size={13} />
+            Registry File — Official Filer Ledger
           </div>
-          <Title 
-            level={2} 
-            style={{ 
-              fontFamily: displayFont, 
-              fontSize: '38px',
-              fontWeight: 700, 
-              color: ink,
+          <Title
+            level={2}
+            style={{
               margin: 0,
+              fontWeight: 700,
+              color: ink,
+              fontFamily: displayFont,
               textTransform: 'uppercase',
-              letterSpacing: '-0.5px'
+              letterSpacing: '-0.5px',
+              fontSize: '32px',
             }}
           >
             Account Profile
           </Title>
-          <Paragraph style={{ fontFamily: bodyFont, color: inkSoft, margin: '6px 0 0 0', fontSize: '15px' }}>
-            Inspect registered credentials and manage official contact details attached to your claims.
+          <Paragraph style={{ color: inkSoft, margin: '6px 0 0 0', fontSize: '15px', fontFamily: bodyFont }}>
+            View and edit your personal profile details and contact file.
           </Paragraph>
         </div>
 
         <Row gutter={[28, 28]}>
           
-          {/* AVATAR SUMMARY STAMP CARD */}
-          <Col xs={24} md={9}>
-            <div 
+          {/* AVATAR SUMMARY CARD */}
+          <Col xs={24} md={8}>
+            <Card 
               style={{ 
+                position: 'relative',
                 textAlign: 'center', 
-                backgroundColor: paperLight,
+                borderRadius: 0, 
+                boxShadow: `5px 5px 0px ${ink}`,
                 border: `2px solid ${ink}`,
-                boxShadow: `6px 6px 0px ${ink}`,
-                padding: '36px 20px',
-                position: 'relative'
+                backgroundColor: paperLight,
               }}
+              bodyStyle={{ padding: '36px 20px' }}
             >
-              {/* Grommet Accent */}
-              <div 
+              {/* BRASS GROMMET ACCENT */}
+              <div
                 style={{
                   position: 'absolute',
                   top: '12px',
@@ -174,339 +175,322 @@ const Profile: React.FC = () => {
                   height: '12px',
                   borderRadius: '50%',
                   border: `2px solid ${brass}`,
-                  backgroundColor: paper,
+                  background: paper,
                 }}
               />
 
               <Avatar 
                 size={84} 
                 style={{ 
-                  backgroundColor: paperDeep, 
-                  color: ink,
-                  border: `2px solid ${ink}`,
+                  backgroundColor: ink,
+                  color: paperLight,
+                  fontSize: '32px',
                   fontFamily: displayFont,
-                  fontWeight: 700,
-                  fontSize: '36px',
-                  marginBottom: '16px' 
+                  fontWeight: 'bold',
+                  border: `2px solid ${brass}`,
+                  boxShadow: `3px 3px 0px ${brass}`,
+                  marginBottom: '20px' 
                 }}
               >
                 {user.name ? user.name[0].toUpperCase() : 'U'}
               </Avatar>
-
-              <div 
-                style={{ 
-                  fontFamily: monoFont, 
-                  fontSize: '11px', 
-                  color: inkSoft, 
-                  letterSpacing: '1px', 
-                  textTransform: 'uppercase',
-                  marginBottom: '4px' 
-                }}
-              >
-                VERIFIED FILER IDENTITY
-              </div>
-
-              <Title 
-                level={4} 
-                style={{ 
-                  fontFamily: displayFont, 
-                  margin: '0 0 4px 0', 
-                  fontWeight: 700, 
+              
+              <Title
+                level={4}
+                style={{
+                  margin: '0 0 6px 0',
+                  fontWeight: 700,
                   color: ink,
-                  fontSize: '22px',
-                  textTransform: 'uppercase'
+                  fontFamily: displayFont,
+                  textTransform: 'uppercase',
+                  fontSize: '20px',
                 }}
               >
                 {user.name}
               </Title>
-
-              <Text style={{ fontFamily: monoFont, display: 'block', fontSize: '12px', color: inkSoft, marginBottom: '24px' }}>
+              
+              <Text
+                style={{
+                  display: 'block',
+                  fontSize: '13px',
+                  marginBottom: '24px',
+                  color: inkSoft,
+                  fontFamily: monoFont,
+                  wordBreak: 'break-all',
+                }}
+              >
                 {user.email}
               </Text>
               
-              <button 
+              <Button 
+                type="default" 
                 onClick={handleEditClick}
-                style={{ 
-                  width: '100%',
-                  display: 'inline-flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  gap: '8px',
+                block
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   fontFamily: monoFont,
                   fontWeight: 700,
                   fontSize: '12px',
                   letterSpacing: '1px',
                   textTransform: 'uppercase',
-                  padding: '12px 16px',
-                  backgroundColor: ink,
-                  color: paperLight,
-                  border: 'none',
-                  cursor: 'pointer',
-                  boxShadow: `3px 3px 0px ${brass}`
+                  backgroundColor: paper,
+                  border: `2px solid ${ink}`,
+                  color: ink,
+                  borderRadius: 0,
+                  height: '42px',
+                  boxShadow: `2px 2px 0px ${ink}`,
                 }}
               >
-                <Edit3 size={15} /> Amend Identity File
-              </button>
-            </div>
+                <Edit3 size={15} style={{ marginRight: '6px' }} />
+                Edit Profile
+              </Button>
+            </Card>
           </Col>
 
-          {/* DETAILED INFORMATION LEDGER CARD */}
-          <Col xs={24} md={15}>
-            <div 
+          {/* DETAILED INFORMATION CARD */}
+          <Col xs={24} md={16}>
+            <Card 
               style={{ 
-                backgroundColor: paperLight,
+                borderRadius: 0, 
+                boxShadow: `5px 5px 0px ${ink}`,
                 border: `2px solid ${ink}`,
-                boxShadow: `6px 6px 0px ${ink}`,
-                padding: '36px 32px',
+                backgroundColor: paperLight,
                 height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between'
               }}
+              bodyStyle={{ padding: '32px' }}
             >
-              <div>
-                <div 
-                  style={{ 
-                    fontFamily: monoFont, 
-                    fontSize: '12px', 
-                    letterSpacing: '1px', 
-                    color: inkSoft, 
-                    textTransform: 'uppercase',
-                    marginBottom: '18px',
-                    borderBottom: `2px solid ${ink}`,
-                    paddingBottom: '8px',
-                    fontWeight: 700
-                  }}
-                >
-                  OFFICIAL FILER LEDGER DETAILS
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  
-                  {/* DISPLAY NAME */}
-                  <div style={{ backgroundColor: paper, border: `1px solid ${ink}`, padding: '14px 16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: monoFont, fontSize: '11px', color: inkSoft, textTransform: 'uppercase', marginBottom: '4px' }}>
-                      <User size={14} style={{ color: brass }} /> Display Filer Name
-                    </div>
-                    <div style={{ fontFamily: displayFont, fontSize: '18px', fontWeight: 700, color: ink }}>
-                      {user.name}
-                    </div>
-                  </div>
-
-                  {/* EMAIL */}
-                  <div style={{ backgroundColor: paper, border: `1px solid ${ink}`, padding: '14px 16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: monoFont, fontSize: '11px', color: inkSoft, textTransform: 'uppercase', marginBottom: '4px' }}>
-                      <Mail size={14} style={{ color: claimRed }} /> Official Email Address
-                    </div>
-                    <div style={{ fontFamily: monoFont, fontSize: '14px', fontWeight: 600, color: ink }}>
-                      {user.email}
-                    </div>
-                  </div>
-
-                  {/* PHONE */}
-                  <div style={{ backgroundColor: paper, border: `1px solid ${ink}`, padding: '14px 16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: monoFont, fontSize: '11px', color: inkSoft, textTransform: 'uppercase', marginBottom: '4px' }}>
-                      <Phone size={14} style={{ color: ink }} /> Contact Phone Number
-                    </div>
-                    <div style={{ fontFamily: monoFont, fontSize: '14px', fontWeight: 600, color: ink }}>
-                      {user.phone || <span style={{ color: inkSoft, fontStyle: 'italic' }}>[Not Specified]</span>}
-                    </div>
-                  </div>
-
-                  {/* DATE JOINED */}
-                  <div style={{ backgroundColor: paper, border: `1px solid ${ink}`, padding: '14px 16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: monoFont, fontSize: '11px', color: inkSoft, textTransform: 'uppercase', marginBottom: '4px' }}>
-                      <Calendar size={14} style={{ color: brass }} /> Registry Enrollment Date
-                    </div>
-                    <div style={{ fontFamily: monoFont, fontSize: '13px', color: ink }}>
-                      {user.createdAt ? dayjs(user.createdAt).format('MMMM DD, YYYY') : 'August 15, 2026'}
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-
-              {/* SECURITY NOTICE BANNER */}
-              <div 
-                style={{ 
-                  marginTop: '28px', 
-                  backgroundColor: paperDeep, 
-                  border: `2px solid ${brass}`, 
-                  padding: '14px 16px', 
-                  display: 'flex', 
-                  alignItems: 'flex-start',
-                  gap: '12px' 
+              <Descriptions
+                title={
+                  <span
+                    style={{
+                      fontFamily: displayFont,
+                      color: ink,
+                      fontSize: '20px',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '-0.5px',
+                    }}
+                  >
+                    Profile Details
+                  </span>
+                }
+                column={1}
+                bordered
+                size="middle"
+                style={{
+                  backgroundColor: paper,
+                  border: `1.5px solid ${ink}`,
+                  borderRadius: 0,
+                  overflow: 'hidden',
                 }}
               >
-                <ShieldAlert size={20} style={{ color: brass, flexShrink: 0, marginTop: '2px' }} />
-                <Text style={{ fontFamily: bodyFont, fontSize: '13px', color: ink, lineHeight: 1.5 }}>
-                  <strong>Registry Privacy Notice:</strong> Contact credentials are only made accessible to verified users reviewing your specific lost/found reports. Keep credentials accurate to expedite reclaim handovers.
+                <Descriptions.Item 
+                  label={
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: inkSoft, fontFamily: monoFont, fontSize: '12px', fontWeight: 600, textTransform: 'uppercase' }}>
+                      <User size={15} style={{ color: brass }} /> Display Name
+                    </span>
+                  }
+                >
+                  <strong style={{ color: ink, fontFamily: bodyFont, fontSize: '15px' }}>{user.name}</strong>
+                </Descriptions.Item>
+
+                <Descriptions.Item 
+                  label={
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: inkSoft, fontFamily: monoFont, fontSize: '12px', fontWeight: 600, textTransform: 'uppercase' }}>
+                      <Mail size={15} style={{ color: brass }} /> Email Address
+                    </span>
+                  }
+                >
+                  <span style={{ color: ink, fontFamily: monoFont, fontSize: '14px' }}>{user.email}</span>
+                </Descriptions.Item>
+
+                <Descriptions.Item 
+                  label={
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: inkSoft, fontFamily: monoFont, fontSize: '12px', fontWeight: 600, textTransform: 'uppercase' }}>
+                      <Phone size={15} style={{ color: brass }} /> Contact Phone
+                    </span>
+                  }
+                >
+                  {user.phone ? (
+                    <span style={{ color: ink, fontFamily: monoFont, fontSize: '14px' }}>{user.phone}</span>
+                  ) : (
+                    <Text style={{ color: inkSoft, fontStyle: 'italic', fontFamily: bodyFont }}>Not Specified</Text>
+                  )}
+                </Descriptions.Item>
+
+                <Descriptions.Item 
+                  label={
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: inkSoft, fontFamily: monoFont, fontSize: '12px', fontWeight: 600, textTransform: 'uppercase' }}>
+                      <Calendar size={15} style={{ color: brass }} /> Date Joined
+                    </span>
+                  }
+                >
+                  <span style={{ color: ink, fontFamily: monoFont, fontSize: '14px' }}>
+                    {user.createdAt ? dayjs(user.createdAt).format('MMMM DD, YYYY') : 'August 15, 2026'}
+                  </span>
+                </Descriptions.Item>
+              </Descriptions>
+
+              {/* SECURITY WARNING / PRIVACY NOTE */}
+              <div
+                style={{
+                  marginTop: '28px',
+                  backgroundColor: paper,
+                  border: `2px solid ${brass}`,
+                  padding: '16px',
+                  display: 'flex',
+                  gap: '14px',
+                  alignItems: 'flex-start',
+                }}
+              >
+                <ShieldAlert size={20} style={{ color: claimRed, flexShrink: 0, marginTop: '2px' }} />
+                <Text style={{ fontSize: '13px', lineHeight: 1.6, color: inkSoft, fontFamily: bodyFont }}>
+                  For security, <strong style={{ color: ink }}>Unstray</strong> only shares phone and email credentials with users who view items you specifically report. Keep this contact info accurate so finders can reach you directly.
                 </Text>
               </div>
-
-            </div>
+            </Card>
           </Col>
 
         </Row>
 
         {/* EDIT PROFILE MODAL */}
-        {isEditModalOpen && (
-          <div
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(32, 48, 58, 0.65)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000,
-              padding: '24px'
-            }}
-          >
+        <Modal
+          title={
+            <span style={{ fontFamily: displayFont, color: ink, fontWeight: 700, fontSize: '20px', textTransform: 'uppercase' }}>
+              Edit Profile Information
+            </span>
+          }
+          open={isEditModalOpen}
+          onCancel={() => setIsEditModalOpen(false)}
+          footer={[
+            <Button
+              key="cancel"
+              onClick={() => setIsEditModalOpen(false)}
+              style={{
+                borderRadius: 0,
+                backgroundColor: paper,
+                border: `2px solid ${ink}`,
+                color: ink,
+                fontFamily: monoFont,
+                fontWeight: 600,
+                fontSize: '12px',
+                textTransform: 'uppercase',
+              }}
+            >
+              Cancel
+            </Button>,
+            <Button
+              key="submit"
+              type="primary"
+              loading={isSaving}
+              onClick={() => form.submit()}
+              style={{
+                borderRadius: 0,
+                backgroundColor: ink,
+                border: `2px solid ${ink}`,
+                color: paperLight,
+                fontFamily: monoFont,
+                fontWeight: 700,
+                fontSize: '12px',
+                textTransform: 'uppercase',
+                boxShadow: `2px 2px 0px ${brass}`,
+              }}
+            >
+              Save Details
+            </Button>,
+          ]}
+          destroyOnClose
+          modalRender={(modal) => (
             <div
               style={{
-                width: '100%',
-                maxWidth: '480px',
                 backgroundColor: paperLight,
                 border: `2px solid ${ink}`,
                 boxShadow: `8px 8px 0px ${ink}`,
-                padding: '32px 28px',
-                position: 'relative'
+                padding: '24px',
               }}
             >
-              {/* Grommet Accent */}
-              <div
+              {modal}
+            </div>
+          )}
+        >
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={handleEditSubmit}
+            style={{ marginTop: '20px' }}
+          >
+            <Form.Item
+              name="name"
+              label={
+                <span
+                  style={{
+                    fontFamily: monoFont,
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: ink,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                  }}
+                >
+                  Full Name
+                </span>
+              }
+              rules={[
+                { required: true, message: 'Please enter your name' },
+                { min: 2, message: 'Name must be at least 2 characters' }
+              ]}
+            >
+              <Input
+                size="large"
                 style={{
-                  position: 'absolute',
-                  top: '16px',
-                  right: '16px',
-                  width: '14px',
-                  height: '14px',
-                  borderRadius: '50%',
-                  border: `2px solid ${brass}`,
                   backgroundColor: paper,
+                  border: `1.5px solid ${ink}`,
+                  borderRadius: 0,
+                  fontFamily: bodyFont,
+                  color: ink,
                 }}
               />
+            </Form.Item>
 
-              <div 
-                style={{ 
-                  fontFamily: displayFont, 
-                  fontSize: '24px', 
-                  fontWeight: 700, 
-                  color: ink, 
-                  textTransform: 'uppercase',
-                  marginBottom: '6px' 
+            <Form.Item
+              name="phone"
+              label={
+                <span
+                  style={{
+                    fontFamily: monoFont,
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: ink,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                  }}
+                >
+                  Phone Number
+                </span>
+              }
+              rules={[
+                { 
+                  pattern: /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/,
+                  message: 'Please enter a valid phone number format'
+                }
+              ]}
+            >
+              <Input
+                size="large"
+                placeholder="e.g. +1 (555) 123-4567"
+                style={{
+                  backgroundColor: paper,
+                  border: `1.5px solid ${ink}`,
+                  borderRadius: 0,
+                  fontFamily: bodyFont,
+                  color: ink,
                 }}
-              >
-                Amend Profile File
-              </div>
-              <Paragraph style={{ fontFamily: bodyFont, fontSize: '13px', color: inkSoft, marginBottom: '20px' }}>
-                Update display attributes attached to your registered claim tickets.
-              </Paragraph>
-
-              <Form
-                form={form}
-                layout="vertical"
-                onFinish={handleEditSubmit}
-              >
-                <Form.Item
-                  name="name"
-                  label={
-                    <span style={{ fontFamily: monoFont, fontSize: '11px', textTransform: 'uppercase', color: inkSoft, fontWeight: 600 }}>
-                      Full Filer Name
-                    </span>
-                  }
-                  rules={[
-                    { required: true, message: 'Please enter your name' },
-                    { min: 2, message: 'Name must be at least 2 characters' }
-                  ]}
-                  style={{ marginBottom: '18px' }}
-                >
-                  <Input 
-                    style={{
-                      fontFamily: bodyFont,
-                      fontSize: '14px',
-                      borderRadius: 0,
-                      border: `1px solid ${ink}`,
-                      height: '42px',
-                      backgroundColor: paper
-                    }}
-                  />
-                </Form.Item>
-
-                <Form.Item
-                  name="phone"
-                  label={
-                    <span style={{ fontFamily: monoFont, fontSize: '11px', textTransform: 'uppercase', color: inkSoft, fontWeight: 600 }}>
-                      Contact Phone Number
-                    </span>
-                  }
-                  rules={[
-                    { 
-                      pattern: /^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/,
-                      message: 'Please enter a valid phone number format'
-                    }
-                  ]}
-                  style={{ marginBottom: '28px' }}
-                >
-                  <Input 
-                    placeholder="e.g. +94 77 123 4567" 
-                    style={{
-                      fontFamily: monoFont,
-                      fontSize: '13px',
-                      borderRadius: 0,
-                      border: `1px solid ${ink}`,
-                      height: '42px',
-                      backgroundColor: paper
-                    }}
-                  />
-                </Form.Item>
-
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                  <button
-                    type="button"
-                    onClick={() => setIsEditModalOpen(false)}
-                    style={{
-                      fontFamily: monoFont,
-                      fontWeight: 700,
-                      fontSize: '12px',
-                      textTransform: 'uppercase',
-                      padding: '10px 20px',
-                      backgroundColor: 'transparent',
-                      color: ink,
-                      border: `1px solid ${ink}`,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="submit"
-                    disabled={isSaving}
-                    style={{
-                      fontFamily: monoFont,
-                      fontWeight: 700,
-                      fontSize: '12px',
-                      textTransform: 'uppercase',
-                      padding: '10px 20px',
-                      backgroundColor: ink,
-                      color: paperLight,
-                      border: 'none',
-                      cursor: isSaving ? 'not-allowed' : 'pointer',
-                      boxShadow: `2px 2px 0px ${brass}`
-                    }}
-                  >
-                    {isSaving ? 'Saving Updates...' : 'Save File Details'}
-                  </button>
-                </div>
-              </Form>
-            </div>
-          </div>
-        )}
+              />
+            </Form.Item>
+          </Form>
+        </Modal>
 
       </div>
     </div>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Typography, Breadcrumb, message, Button } from 'antd';
-import { FileEdit, ShieldAlert } from 'lucide-react';
+import { Card, Typography, Breadcrumb, message, Result, Button } from 'antd';
+import { Edit as EditIcon } from 'lucide-react';
 import { itemService } from '../../services/itemService';
 import { useAuth } from '../../contexts/AuthContext';
 import ItemForm from '../../components/forms/ItemForm';
@@ -14,7 +14,7 @@ const { Title, Paragraph } = Typography;
 
 /**
  * ───────────────────────────────────────────────────────────
- * DESIGN TOKENS — "Lost Property Office" identity
+ *  DESIGN TOKENS — "Lost Property Office" identity
  * ───────────────────────────────────────────────────────────
  */
 const ink = "#20303A";       // primary text / stamped ink
@@ -22,8 +22,6 @@ const inkSoft = "#4B5D67";   // secondary ink
 const paper = "#EDE6D6";     // registry paper background
 const paperLight = "#F8F4E9"; // card / ticket paper
 // const paperDeep = "#E2D8C1"; // recessed paper
-const claimRed = "#A23E2E";  // LOST tag accent
-const claimGreen = "#3E6C52"; // FOUND tag accent
 const brass = "#A9884F";     // grommet / hardware accent
 
 const displayFont = "'Zilla Slab', 'Roboto Slab', Georgia, serif";
@@ -63,82 +61,74 @@ const EditItem: React.FC = () => {
   }, [id]);
 
   if (isLoading) {
-    return <LoadingState message="Retrieving file from registry..." fullPage />;
+    return <LoadingState message="Fetching item file for amendment..." fullPage />;
   }
 
   if (hasError || !item) {
     return (
-      <div style={{ maxWidth: '800px', margin: '60px auto', padding: '0 24px', fontFamily: bodyFont }}>
+      <div style={{ maxWidth: '800px', margin: '40px auto', padding: '0 24px' }}>
         <ErrorState
-          title="File Not Found"
-          message="The record you are attempting to edit could not be retrieved from the registry ledger."
+          title="Listing Not Found"
+          message="The listing you are trying to edit could not be loaded."
           onGoBack={() => navigate('/items')}
         />
       </div>
     );
   }
 
-  // Security authorization check: Only owner can edit
-  const isOwner = currentUser && item.userId === currentUser.id;
+  // Security authorization check: Only owner can edit (handling number/string ID comparison safely)
+  const isOwner = currentUser && Number(item.reportedBy) === Number(currentUser.id);
   if (!isOwner) {
     return (
-      <div
-        style={{
-          maxWidth: '680px',
-          margin: '80px auto',
-          padding: '40px 32px',
-          backgroundColor: paperLight,
-          border: `2px solid ${ink}`,
-          boxShadow: `6px 6px 0px ${ink}`,
-          fontFamily: bodyFont,
-          textAlign: 'center',
+      <div 
+        style={{ 
+          width: '100%', 
+          minHeight: '100vh', 
+          backgroundColor: paper, 
+          backgroundImage: paperTexture, 
+          padding: '80px 24px', 
+          fontFamily: bodyFont 
         }}
       >
-        <div
-          style={{
-            display: 'inline-flex',
-            padding: '12px',
-            border: `2px solid ${claimRed}`,
-            color: claimRed,
-            marginBottom: '16px',
-          }}
-        >
-          <ShieldAlert size={32} />
+        <div style={{ maxWidth: '650px', margin: '0 auto' }}>
+          <Card
+            style={{
+              borderRadius: 0,
+              border: `2px solid ${ink}`,
+              boxShadow: `6px 6px 0px ${ink}`,
+              backgroundColor: paperLight,
+              textAlign: 'center',
+            }}
+            styles={{ body: { padding: '32px' } }}
+          >
+            <Result
+              status="403"
+              title={<span style={{ fontFamily: displayFont, textTransform: 'uppercase', color: ink, fontWeight: 700, fontSize: '24px' }}>Access Denied</span>}
+              subTitle={<span style={{ fontFamily: bodyFont, color: inkSoft, fontSize: '14px' }}>You do not have permission to edit this listing because you are not the registered reporter.</span>}
+              extra={
+                <Button 
+                  type="primary" 
+                  onClick={() => navigate(`/items/${item.id}`)}
+                  style={{
+                    borderRadius: 0,
+                    backgroundColor: ink,
+                    borderColor: ink,
+                    color: paperLight,
+                    fontFamily: monoFont,
+                    fontWeight: 700,
+                    fontSize: '12px',
+                    textTransform: 'uppercase',
+                    height: '42px',
+                    padding: '0 24px',
+                    boxShadow: `3px 3px 0px ${brass}`,
+                  }}
+                >
+                  Back to Item File
+                </Button>
+              }
+            />
+          </Card>
         </div>
-        <Title
-          level={2}
-          style={{
-            fontFamily: displayFont,
-            color: ink,
-            textTransform: 'uppercase',
-            letterSpacing: '-0.5px',
-            margin: '0 0 12px 0',
-          }}
-        >
-          Access Restricted
-        </Title>
-        <Paragraph style={{ fontFamily: bodyFont, color: inkSoft, fontSize: '15px', marginBottom: '28px' }}>
-          You do not hold administrative authority over File No. {String(item.id).padStart(5, '0').slice(-5)}. Only the original claim filer may amend this entry.
-        </Paragraph>
-        <Button
-          onClick={() => navigate(`/items/${item.id}`)}
-          style={{
-            fontFamily: monoFont,
-            fontWeight: 700,
-            fontSize: '12px',
-            letterSpacing: '1px',
-            textTransform: 'uppercase',
-            height: '42px',
-            padding: '0 24px',
-            backgroundColor: ink,
-            color: paperLight,
-            border: 'none',
-            borderRadius: 0,
-            cursor: 'pointer',
-          }}
-        >
-          Return to Case File
-        </Button>
       </div>
     );
   }
@@ -152,11 +142,14 @@ const EditItem: React.FC = () => {
         type: data.type,
         category: data.category as any,
         location: data.location,
-        media: data.media,
-        createdAt: data.formattedDate,
+        imageUrls: data.imageUrls,
+        date: data.formattedDate,
+        ownerName: item.ownerName || currentUser?.name || currentUser?.name,
+        ownerEmail: item.ownerEmail || currentUser?.email,
+        ownerPhone: item.ownerPhone || currentUser?.phone,
       });
 
-      message.success('Registry record updated successfully!');
+      message.success('Listing details updated successfully!');
       navigate(`/items/${item.id}`);
     } catch (err: any) {
       console.error(err);
@@ -166,160 +159,98 @@ const EditItem: React.FC = () => {
     }
   };
 
-  // Convert Item to ItemForm format
+  // Convert Item to ItemForm format using imageUrls list
   const formInitialValues = {
     title: item.title,
     description: item.description,
     type: item.type,
     category: item.category,
     location: item.location,
-    dateString: item.createdAt, // fallback to createdAt if not specified
-    media: item.media,
+    dateString: item.date || item.createdAt,
+    imageUrls: item.imageUrls || [],
   };
 
-  const isLost = item.type === 'LOST';
-
   return (
-    <div
-      style={{
-        width: '100%',
-        minHeight: '100vh',
-        backgroundColor: paper,
-        backgroundImage: paperTexture,
-        padding: '48px 24px 88px 24px',
-        fontFamily: bodyFont,
+    <div 
+      style={{ 
+        width: '100%', 
+        minHeight: '100vh', 
+        backgroundColor: paper, 
+        backgroundImage: paperTexture, 
+        padding: '48px 24px 80px 24px', 
+        fontFamily: bodyFont 
       }}
     >
-      <div style={{ maxWidth: '920px', margin: '0 auto' }}>
+      <div style={{ maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
+        
         {/* BREADCRUMB */}
-        <Breadcrumb
-          style={{
-            fontFamily: monoFont,
-            fontSize: '12px',
-            letterSpacing: '0.5px',
-            textTransform: 'uppercase',
-            marginBottom: '24px',
-          }}
-        >
-          <Breadcrumb.Item>
-            <Link to="/" style={{ color: inkSoft }}>
-              Home
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <Link to="/items" style={{ color: inkSoft }}>
-              Registry
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>
-            <Link to={`/items/${item.id}`} style={{ color: inkSoft }}>
-              File No. {String(item.id).padStart(5, '0').slice(-5)}
-            </Link>
-          </Breadcrumb.Item>
-          <Breadcrumb.Item style={{ color: ink, fontWeight: 700 }}>
-            Amend Entry
-          </Breadcrumb.Item>
-        </Breadcrumb>
+        <Breadcrumb 
+          style={{ marginBottom: '16px', fontFamily: monoFont, fontSize: '12px' }}
+          items={[
+            { title: <Link to="/" style={{ color: inkSoft }}>Home</Link> },
+            { title: <Link to="/items" style={{ color: inkSoft }}>Browse Directory</Link> },
+            { title: <Link to={`/items/${item.id}`} style={{ color: inkSoft }}>Case #{String(item.id).padStart(5, '0')}</Link> },
+            { title: <span style={{ color: ink }}>Edit Record</span> }
+          ]}
+        />
 
-        {/* HEADER BLOCK */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            flexWrap: 'wrap',
-            gap: '16px',
-            borderBottom: `2px solid ${ink}`,
-            paddingBottom: '20px',
-            marginBottom: '32px',
-          }}
-        >
-          <div>
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontFamily: monoFont,
-                fontSize: '11px',
-                letterSpacing: '1.5px',
-                color: inkSoft,
-                textTransform: 'uppercase',
-                marginBottom: '8px',
-              }}
-            >
-              <FileEdit size={14} style={{ color: brass }} />
-              Amend Registry Entry — Case No. {String(item.id).padStart(5, '0').slice(-5)}
-            </div>
-            <Title
-              level={2}
-              style={{
-                fontFamily: displayFont,
-                fontSize: '36px',
-                fontWeight: 700,
-                color: ink,
-                margin: 0,
-                textTransform: 'uppercase',
-                letterSpacing: '-0.5px',
-              }}
-            >
-              Update Record
-            </Title>
-            <Paragraph style={{ fontFamily: bodyFont, color: inkSoft, margin: '6px 0 0 0', fontSize: '15px' }}>
-              Modify official attributes, location, or descriptive logs for this record.
-            </Paragraph>
-          </div>
-
+        {/* HEADER SECTION */}
+        <div style={{ marginBottom: '28px' }}>
           <div
             style={{
-              padding: '6px 14px',
-              border: `2px solid ${isLost ? claimRed : claimGreen}`,
-              color: isLost ? claimRed : claimGreen,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
               fontFamily: monoFont,
               fontSize: '12px',
-              fontWeight: 700,
-              letterSpacing: '1px',
+              letterSpacing: '1.5px',
+              color: inkSoft,
               textTransform: 'uppercase',
-              backgroundColor: paperLight,
-              transform: 'rotate(-1deg)',
+              marginBottom: '8px',
+              paddingBottom: '4px',
+              borderBottom: `1px dashed ${inkSoft}`,
             }}
           >
-            ● {item.type} ITEM
+            <EditIcon size={13} style={{ color: brass }} />
+            Docket Amendment — Record #{String(item.id).padStart(5, '0')}
           </div>
+          <Title 
+            level={2} 
+            style={{ 
+              margin: 0, 
+              fontWeight: 700, 
+              color: ink, 
+              fontFamily: displayFont, 
+              textTransform: 'uppercase', 
+              letterSpacing: '-0.5px', 
+              fontSize: '32px' 
+            }}
+          >
+            Edit Item Details
+          </Title>
+          <Paragraph style={{ color: inkSoft, margin: '6px 0 0 0', fontSize: '15px', fontFamily: bodyFont }}>
+            Update the physical attributes, status, or description for your registered item.
+          </Paragraph>
         </div>
 
-        {/* FORM CONTAINER - Claim Ticket Ledger style */}
-        <div
+        {/* CARD CONTAINER */}
+        <Card
           style={{
-            position: 'relative',
-            backgroundColor: paperLight,
-            border: `2px solid ${ink}`,
-            borderLeft: `8px solid ${isLost ? claimRed : claimGreen}`,
+            borderRadius: 0,
             boxShadow: `6px 6px 0px ${ink}`,
-            padding: '40px 32px',
+            border: `2px solid ${ink}`,
+            backgroundColor: paperLight,
           }}
+          styles={{ body: { padding: '36px' } }}
         >
-          {/* Grommet Accent */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '16px',
-              right: '16px',
-              width: '14px',
-              height: '14px',
-              borderRadius: '50%',
-              border: `2px solid ${brass}`,
-              backgroundColor: paper,
-            }}
-          />
-
           <ItemForm
             initialValues={formInitialValues}
             onSubmit={handleFormSubmit}
             isSubmitting={isUpdating}
-            submitButtonText="Save Entry Updates"
+            submitButtonText="Save Changes"
           />
-        </div>
+        </Card>
+        
       </div>
     </div>
   );

@@ -6,13 +6,14 @@ import {
   Input, 
   Select, 
   Segmented, 
-  // Button, 
+  Button, 
   Space, 
   Typography, 
+  Card, 
   Skeleton,
   Breadcrumb
 } from 'antd';
-import { Search, MapPin, ArrowUpDown, Filter, RotateCcw, FolderSearch } from 'lucide-react';
+import { Search, MapPin, ArrowUpDown, Filter, RotateCcw, Tag as TagIcon } from 'lucide-react';
 import { itemService } from '../../services/itemService';
 import { ITEM_CATEGORIES } from '../../types/item';
 import type { Item, ItemType, ItemStatus } from '../../types/item';
@@ -24,16 +25,15 @@ const { Title, Paragraph, Text } = Typography;
 
 /**
  * ───────────────────────────────────────────────────────────
- * DESIGN TOKENS — "Lost Property Office" identity
+ *  DESIGN TOKENS — "Lost Property Office" identity
  * ───────────────────────────────────────────────────────────
  */
 const ink = "#20303A";       // primary text / stamped ink
 const inkSoft = "#4B5D67";   // secondary ink
 const paper = "#EDE6D6";     // registry paper background
 const paperLight = "#F8F4E9"; // card / ticket paper
-const paperDeep = "#E2D8C1"; // recessed paper
-const claimRed = "#A23E2E";  // LOST tag
-const claimGreen = "#3E6C52"; // FOUND tag
+const paperDeep = "#E2D8C1"; // recessed paper (skeletons, wells)
+// const claimRed = "#A23E2E";  // LOST tag / alert highlight
 const brass = "#A9884F";     // grommet / hardware accent
 
 const displayFont = "'Zilla Slab', 'Roboto Slab', Georgia, serif";
@@ -79,11 +79,28 @@ const Items: React.FC = () => {
           type: typeParam,
           category: categoryParam,
           status: statusParam,
-          search: searchParam,
           location: locationParam,
-          sort: sortParam,
         });
-        setItems(data);
+
+        // Optional frontend filtering for search keywords
+        let filteredData = data;
+        if (searchParam) {
+          const query = searchParam.toLowerCase();
+          filteredData = data.filter(
+            (item) =>
+              item.title.toLowerCase().includes(query) ||
+              item.description.toLowerCase().includes(query)
+          );
+        }
+
+        // Apply sorting (newest/oldest)
+        filteredData.sort((a, b) => {
+          const dateA = new Date(a.createdAt || 0).getTime();
+          const dateB = new Date(b.createdAt || 0).getTime();
+          return sortParam === 'oldest' ? dateA - dateB : dateB - dateA;
+        });
+
+        setItems(filteredData);
       } catch (err) {
         console.error('Failed to retrieve items directory:', err);
         setHasError(true);
@@ -129,210 +146,166 @@ const Items: React.FC = () => {
     setSearchParams(new URLSearchParams());
   };
 
-  // Alternate tag colors & angles for claim-ticket layout
-  const ticketTint = (i: number) => (i % 2 === 0 ? claimRed : claimGreen);
-  const ticketTilt = (i: number) => ["-1.2deg", "0.8deg", "-0.6deg", "1.1deg"][i % 4];
-
   return (
     <div 
       style={{ 
         width: '100%', 
-        minHeight: '100vh',
+        minHeight: '100vh', 
         backgroundColor: paper, 
-        backgroundImage: paperTexture,
-        padding: '36px 24px 88px 24px', 
+        backgroundImage: paperTexture, 
+        padding: '48px 24px 80px 24px', 
         fontFamily: bodyFont 
       }}
     >
-      <div style={{ maxWidth: '1240px', margin: '0 auto' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
         
         {/* BREADCRUMB */}
         <Breadcrumb 
-          style={{ 
-            fontFamily: monoFont, 
-            fontSize: '12px', 
-            letterSpacing: '0.5px', 
-            textTransform: 'uppercase',
-            marginBottom: '20px' 
-          }}
+          style={{ marginBottom: '16px', fontFamily: monoFont, fontSize: '12px' }}
           items={[
             { title: <Link to="/" style={{ color: inkSoft }}>Home</Link> },
-            { title: <span style={{ color: ink, fontWeight: 700 }}>Registry Directory</span> }
+            { title: <span style={{ color: ink }}>Browse Directory</span> }
           ]}
         />
 
-        {/* HEADER BLOCK */}
-        <div 
-          style={{ 
-            borderBottom: `2px solid ${ink}`, 
-            paddingBottom: '20px', 
-            marginBottom: '28px' 
-          }}
-        >
-          <div 
-            style={{ 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              gap: '8px', 
-              fontFamily: monoFont, 
-              fontSize: '11px', 
-              letterSpacing: '1.5px', 
-              color: inkSoft, 
+        {/* HEADER SECTION */}
+        <div style={{ marginBottom: '28px' }}>
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontFamily: monoFont,
+              fontSize: '12px',
+              letterSpacing: '1.5px',
+              color: inkSoft,
               textTransform: 'uppercase',
-              marginBottom: '6px' 
+              marginBottom: '10px',
+              paddingBottom: '4px',
+              borderBottom: `1px dashed ${inkSoft}`,
             }}
           >
-            <FolderSearch size={14} style={{ color: brass }} />
-            Official Registry Search Desk
+            <TagIcon size={13} />
+            Unstray Registry — Public Directory Search
           </div>
           <Title 
             level={2} 
             style={{ 
-              fontFamily: displayFont, 
-              fontSize: '38px',
+              margin: 0, 
               fontWeight: 700, 
-              color: ink,
-              margin: 0,
-              textTransform: 'uppercase',
-              letterSpacing: '-0.5px'
+              color: ink, 
+              fontFamily: displayFont, 
+              textTransform: 'uppercase', 
+              letterSpacing: '-0.5px', 
+              fontSize: '32px' 
             }}
           >
-            Directory Ledger
+            Lost &amp; Found Directory
           </Title>
-          <Paragraph style={{ fontFamily: bodyFont, color: inkSoft, margin: '6px 0 0 0', fontSize: '15px' }}>
-            Filter logged cases, search neighborhood boundaries, and inspect registered claim tickets.
+          <Paragraph style={{ color: inkSoft, margin: '6px 0 0 0', fontSize: '15px', fontFamily: bodyFont }}>
+            Browse reports, search locations, and filter categories to locate matching items on file.
           </Paragraph>
         </div>
 
-        {/* FILTER PANEL GRID — Claim Desk Control Terminal */}
-        <div 
+        {/* FILTER PANEL CARD */}
+        <Card 
           style={{ 
-            backgroundColor: paperLight, 
-            border: `2px solid ${ink}`, 
+            marginBottom: '32px', 
+            borderRadius: 0, 
             boxShadow: `6px 6px 0px ${ink}`,
-            padding: '24px',
-            marginBottom: '36px',
-            position: 'relative'
+            border: `2px solid ${ink}`,
+            backgroundColor: paperLight,
           }}
+          styles={{ body: { padding: '24px' } }}
         >
-          {/* Brass Grommet */}
-          <div 
-            style={{
-              position: 'absolute',
-              top: '12px',
-              right: '12px',
-              width: '12px',
-              height: '12px',
-              borderRadius: '50%',
-              border: `2px solid ${brass}`,
-              backgroundColor: paper
-            }}
-          />
-
           <Row gutter={[16, 16]} align="middle">
             
             {/* SEARCH KEYWORDS */}
             <Col xs={24} md={8}>
-              <Space direction="vertical" size={2} style={{ width: '100%' }}>
-                <Text style={{ fontFamily: monoFont, fontSize: '11px', textTransform: 'uppercase', color: inkSoft, fontWeight: 600 }}>
-                  Keyword Description
-                </Text>
-                <Input
-                  placeholder="e.g. phone, wallet, keys..."
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  onPressEnter={handleInputsSubmit}
-                  prefix={<Search size={16} style={{ color: ink, marginRight: '6px' }} />}
-                  style={{
-                    fontFamily: monoFont,
-                    fontSize: '13px',
-                    borderRadius: 0,
-                    border: `1px solid ${ink}`,
-                    height: '42px',
-                    backgroundColor: paper
-                  }}
-                />
-              </Space>
+              <Input
+                placeholder="Search keyword (e.g. phone, wallet)..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onPressEnter={handleInputsSubmit}
+                prefix={<Search size={16} style={{ color: inkSoft, marginRight: '6px' }} />}
+                size="large"
+                style={{
+                  backgroundColor: paper,
+                  border: `1.5px solid ${ink}`,
+                  borderRadius: 0,
+                  fontFamily: bodyFont,
+                  color: ink,
+                }}
+              />
             </Col>
 
             {/* LOCATION KEYWORDS */}
             <Col xs={24} md={6}>
-              <Space direction="vertical" size={2} style={{ width: '100%' }}>
-                <Text style={{ fontFamily: monoFont, fontSize: '11px', textTransform: 'uppercase', color: inkSoft, fontWeight: 600 }}>
-                  Location / Sector
-                </Text>
-                <Input
-                  placeholder="e.g. Library, Main Hall..."
-                  value={locationInput}
-                  onChange={(e) => setLocationInput(e.target.value)}
-                  onPressEnter={handleInputsSubmit}
-                  prefix={<MapPin size={16} style={{ color: claimRed, marginRight: '6px' }} />}
-                  style={{
-                    fontFamily: monoFont,
-                    fontSize: '13px',
-                    borderRadius: 0,
-                    border: `1px solid ${ink}`,
-                    height: '42px',
-                    backgroundColor: paper
-                  }}
-                />
-              </Space>
+              <Input
+                placeholder="Location (e.g. Library)..."
+                value={locationInput}
+                onChange={(e) => setLocationInput(e.target.value)}
+                onPressEnter={handleInputsSubmit}
+                prefix={<MapPin size={16} style={{ color: inkSoft, marginRight: '6px' }} />}
+                size="large"
+                style={{
+                  backgroundColor: paper,
+                  border: `1.5px solid ${ink}`,
+                  borderRadius: 0,
+                  fontFamily: bodyFont,
+                  color: ink,
+                }}
+              />
             </Col>
 
-            {/* SUBMIT INPUTS BUTTON */}
+            {/* SUBMIT INPUTS */}
             <Col xs={24} sm={12} md={5}>
-              <div style={{ paddingTop: '18px' }}>
-                <button
-                  onClick={handleInputsSubmit}
-                  style={{
-                    width: '100%',
-                    height: '42px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    fontFamily: monoFont,
-                    fontWeight: 700,
-                    fontSize: '12px',
-                    letterSpacing: '1px',
-                    textTransform: 'uppercase',
-                    backgroundColor: ink,
-                    color: paperLight,
-                    border: 'none',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <Filter size={15} /> Apply Query
-                </button>
-              </div>
+              <Button 
+                type="primary" 
+                block 
+                size="large" 
+                onClick={handleInputsSubmit} 
+                icon={<Filter size={16} />}
+                style={{
+                  fontFamily: monoFont,
+                  fontWeight: 700,
+                  fontSize: '12px',
+                  letterSpacing: '1px',
+                  textTransform: 'uppercase',
+                  height: '40px',
+                  backgroundColor: ink,
+                  borderColor: ink,
+                  color: paperLight,
+                  borderRadius: 0,
+                  boxShadow: `2px 2px 0px ${brass}`,
+                }}
+              >
+                Apply Search
+              </Button>
             </Col>
 
             {/* RESET BUTTON */}
             <Col xs={24} sm={12} md={5}>
-              <div style={{ paddingTop: '18px' }}>
-                <button
-                  onClick={handleResetFilters}
-                  style={{
-                    width: '100%',
-                    height: '42px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    fontFamily: monoFont,
-                    fontWeight: 700,
-                    fontSize: '12px',
-                    letterSpacing: '1px',
-                    textTransform: 'uppercase',
-                    backgroundColor: 'transparent',
-                    color: ink,
-                    border: `1px solid ${ink}`,
-                    cursor: 'pointer'
-                  }}
-                >
-                  <RotateCcw size={15} /> Reset Filters
-                </button>
-              </div>
+              <Button 
+                block 
+                size="large" 
+                onClick={handleResetFilters} 
+                icon={<RotateCcw size={16} />}
+                style={{
+                  fontFamily: monoFont,
+                  fontWeight: 600,
+                  fontSize: '12px',
+                  letterSpacing: '1px',
+                  textTransform: 'uppercase',
+                  height: '40px',
+                  backgroundColor: paper,
+                  borderColor: ink,
+                  color: ink,
+                  borderRadius: 0,
+                }}
+              >
+                Reset All
+              </Button>
             </Col>
           </Row>
 
@@ -343,9 +316,9 @@ const Items: React.FC = () => {
             
             {/* TYPE FILTER: ALL / LOST / FOUND */}
             <Col xs={24} sm={12} md={6}>
-              <Space direction="vertical" size={2} style={{ width: '100%' }}>
-                <Text style={{ fontFamily: monoFont, fontSize: '11px', textTransform: 'uppercase', color: inkSoft, fontWeight: 600 }}>
-                  Claim Type
+              <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                <Text style={{ fontSize: '11px', fontFamily: monoFont, color: inkSoft, textTransform: 'uppercase', fontWeight: 600 }}>
+                  Item Type
                 </Text>
                 <Segmented
                   value={typeParam || 'ALL'}
@@ -356,12 +329,13 @@ const Items: React.FC = () => {
                     { label: 'Found', value: 'FOUND' },
                   ]}
                   block
+                  size="large"
                   style={{
-                    fontFamily: monoFont,
-                    backgroundColor: paperDeep,
-                    border: `1px solid ${ink}`,
+                    backgroundColor: paper,
+                    border: `1.5px solid ${ink}`,
                     borderRadius: 0,
-                    padding: '2px'
+                    fontFamily: monoFont,
+                    fontSize: '12px',
                   }}
                 />
               </Space>
@@ -369,15 +343,15 @@ const Items: React.FC = () => {
 
             {/* CATEGORIES FILTER */}
             <Col xs={24} sm={12} md={6}>
-              <Space direction="vertical" size={2} style={{ width: '100%' }}>
-                <Text style={{ fontFamily: monoFont, fontSize: '11px', textTransform: 'uppercase', color: inkSoft, fontWeight: 600 }}>
-                  Item Category
+              <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                <Text style={{ fontSize: '11px', fontFamily: monoFont, color: inkSoft, textTransform: 'uppercase', fontWeight: 600 }}>
+                  Category
                 </Text>
                 <Select
                   value={categoryParam || 'All'}
                   onChange={(val) => updateFilter('category', val === 'All' ? '' : val)}
-                  style={{ width: '100%', fontFamily: monoFont, borderRadius: 0 }}
                   size="large"
+                  style={{ width: '100%' }}
                 >
                   <Select.Option value="All">All Categories</Select.Option>
                   {ITEM_CATEGORIES.map((cat) => (
@@ -391,9 +365,9 @@ const Items: React.FC = () => {
 
             {/* STATUS FILTER */}
             <Col xs={24} sm={12} md={6}>
-              <Space direction="vertical" size={2} style={{ width: '100%' }}>
-                <Text style={{ fontFamily: monoFont, fontSize: '11px', textTransform: 'uppercase', color: inkSoft, fontWeight: 600 }}>
-                  File Status
+              <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                <Text style={{ fontSize: '11px', fontFamily: monoFont, color: inkSoft, textTransform: 'uppercase', fontWeight: 600 }}>
+                  Listing Status
                 </Text>
                 <Segmented
                   value={statusParam || 'ALL'}
@@ -404,12 +378,13 @@ const Items: React.FC = () => {
                     { label: 'Resolved', value: 'RESOLVED' },
                   ]}
                   block
+                  size="large"
                   style={{
-                    fontFamily: monoFont,
-                    backgroundColor: paperDeep,
-                    border: `1px solid ${ink}`,
+                    backgroundColor: paper,
+                    border: `1.5px solid ${ink}`,
                     borderRadius: 0,
-                    padding: '2px'
+                    fontFamily: monoFont,
+                    fontSize: '12px',
                   }}
                 />
               </Space>
@@ -417,16 +392,16 @@ const Items: React.FC = () => {
 
             {/* SORT FILTER */}
             <Col xs={24} sm={12} md={6}>
-              <Space direction="vertical" size={2} style={{ width: '100%' }}>
-                <Text style={{ fontFamily: monoFont, fontSize: '11px', textTransform: 'uppercase', color: inkSoft, fontWeight: 600 }}>
-                  Sorting Order
+              <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                <Text style={{ fontSize: '11px', fontFamily: monoFont, color: inkSoft, textTransform: 'uppercase', fontWeight: 600 }}>
+                  Sort Order
                 </Text>
                 <Select
                   value={sortParam}
                   onChange={(val) => updateFilter('sort', val)}
-                  style={{ width: '100%', fontFamily: monoFont, borderRadius: 0 }}
                   size="large"
-                  suffixIcon={<ArrowUpDown size={14} style={{ color: ink }} />}
+                  style={{ width: '100%' }}
+                  suffixIcon={<ArrowUpDown size={15} style={{ color: ink }} />}
                 >
                   <Select.Option value="newest">Newest First</Select.Option>
                   <Select.Option value="oldest">Oldest First</Select.Option>
@@ -434,88 +409,38 @@ const Items: React.FC = () => {
               </Space>
             </Col>
           </Row>
-        </div>
+        </Card>
 
         {/* ITEMS LIST AREA */}
         {isLoading ? (
-          <Row gutter={[28, 36]}>
+          <Row gutter={[24, 24]}>
             {[1, 2, 3, 4, 5, 6].map((n) => (
               <Col key={n} xs={24} sm={12} lg={8}>
                 <div style={{ backgroundColor: paperDeep, padding: '16px', border: `1px solid ${paperDeep}` }}>
-                  <Skeleton.Image style={{ width: '100%', height: '180px' }} active />
-                  <Skeleton active paragraph={{ rows: 3 }} style={{ marginTop: '12px' }} />
+                  <Skeleton.Image style={{ width: '100%', height: '180px', marginBottom: '16px' }} active />
+                  <Skeleton active paragraph={{ rows: 3 }} />
                 </div>
               </Col>
             ))}
           </Row>
         ) : hasError ? (
-          <ErrorState onRetry={() => navigate(0)} />
+          <ErrorState message="Could not retrieve items from the directory." />
         ) : items.length === 0 ? (
           <EmptyState 
-            message="No records on file matching your search query. Try broadening your keywords." 
-            actionText="Reset Directory Filters" 
-            onAction={handleResetFilters} 
+            message="No items match your active filters. Try broadening your keywords." 
           />
         ) : (
           <div>
-            <div 
-              style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center', 
-                marginBottom: '20px',
-                borderBottom: `1px solid ${ink}`,
-                paddingBottom: '8px'
-              }}
-            >
-              <Text style={{ fontFamily: monoFont, fontSize: '12px', fontWeight: 700, color: inkSoft, textTransform: 'uppercase', letterSpacing: '1px' }}>
-                MATCHING FILES FOUND: {items.length}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <Text style={{ fontSize: '13px', fontWeight: 600, fontFamily: monoFont, color: inkSoft, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Showing {items.length} {items.length === 1 ? 'file record' : 'file records'}
               </Text>
             </div>
             
-            <Row gutter={[28, 40]}>
-              {items.map((item, i) => (
+            <Row gutter={[24, 28]}>
+              {items.map((item) => (
                 <Col key={item.id} xs={24} sm={12} lg={8}>
-                  <div
-                    style={{
-                      position: 'relative',
-                      backgroundColor: paperLight,
-                      border: `1px solid ${ink}`,
-                      borderLeft: `6px solid ${ticketTint(i)}`,
-                      transform: `rotate(${ticketTilt(i)})`,
-                      transition: 'transform 0.2s ease',
-                      boxShadow: `3px 3px 0px ${ink}`
-                    }}
-                  >
-                    {/* Grommet Accent */}
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: '10px',
-                        right: '12px',
-                        width: '12px',
-                        height: '12px',
-                        borderRadius: '50%',
-                        border: `2px solid ${brass}`,
-                        backgroundColor: paper,
-                        zIndex: 2
-                      }}
-                    />
-                    <div
-                      style={{
-                        fontFamily: monoFont,
-                        fontSize: '11px',
-                        color: inkSoft,
-                        padding: '8px 14px 6px 14px',
-                        letterSpacing: '0.5px'
-                      }}
-                    >
-                      NO. {String(item.id).padStart(5, '0').slice(-5)}
-                    </div>
-                    <div style={{ borderTop: `1px dashed ${paperDeep}`, padding: '12px' }}>
-                      <ItemCard item={item} />
-                    </div>
-                  </div>
+                  <ItemCard item={item} />
                 </Col>
               ))}
             </Row>

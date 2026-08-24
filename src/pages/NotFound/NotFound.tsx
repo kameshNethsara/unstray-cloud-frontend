@@ -1,21 +1,18 @@
 import React from 'react';
-import { Typography } from 'antd';
+import { Result, Button } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { Compass, ArrowLeft } from 'lucide-react';
-
-const { Title, Paragraph } = Typography;
+import { Tag, ArrowLeft } from 'lucide-react';
 
 /**
  * ───────────────────────────────────────────────────────────
- * DESIGN TOKENS — "Lost Property Office" identity
+ *  DESIGN TOKENS — "Lost Property Office" identity
  * ───────────────────────────────────────────────────────────
  */
 const ink = "#20303A";       // primary text / stamped ink
 const inkSoft = "#4B5D67";   // secondary ink
 const paper = "#EDE6D6";     // registry paper background
 const paperLight = "#F8F4E9"; // card / ticket paper
-// const paperDeep = "#E2D8C1"; // recessed paper
-const claimRed = "#A23E2E";  // LOST tag accent
+const claimRed = "#A23E2E";  // LOST tag / alert highlight
 const brass = "#A9884F";     // grommet / hardware accent
 
 const displayFont = "'Zilla Slab', 'Roboto Slab', Georgia, serif";
@@ -34,123 +31,123 @@ const NotFound: React.FC = () => {
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center', 
-        minHeight: '80vh', 
+        minHeight: '85vh', 
         width: '100%',
         backgroundColor: paper,
         backgroundImage: paperTexture,
-        padding: '32px 24px',
-        fontFamily: bodyFont
+        padding: '32px 16px',
+        fontFamily: bodyFont,
       }}
     >
+      {/* 404 CLAIM TICKET / LEDGER FILE */}
       <div
         style={{
-          maxWidth: '560px',
+          position: 'relative',
+          maxWidth: '520px',
           width: '100%',
           backgroundColor: paperLight,
           border: `2px solid ${ink}`,
-          borderTop: `6px solid ${claimRed}`,
-          boxShadow: `8px 8px 0px ${ink}`,
-          padding: '48px 36px',
+          padding: '40px 28px',
+          boxShadow: `6px 6px 0px ${ink}`,
           textAlign: 'center',
-          position: 'relative'
         }}
       >
-        {/* Grommet Accent */}
+        {/* BRASS GROMMET ACCENT */}
         <div
           style={{
             position: 'absolute',
-            top: '16px',
+            top: '12px',
             right: '16px',
             width: '14px',
             height: '14px',
             borderRadius: '50%',
             border: `2px solid ${brass}`,
-            backgroundColor: paper,
+            background: paper,
           }}
         />
 
-        {/* STAMP BADGE */}
+        {/* HEADER LEDGER BANNER */}
         <div
           style={{
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '12px',
-            border: `2px solid ${claimRed}`,
-            color: claimRed,
-            marginBottom: '20px',
-            transform: 'rotate(-2deg)'
-          }}
-        >
-          <Compass size={36} />
-        </div>
-
-        {/* LEDGER FILE ERROR CODE */}
-        <div
-          style={{
+            gap: '6px',
             fontFamily: monoFont,
-            fontSize: '12px',
-            letterSpacing: '2px',
+            fontSize: '11px',
+            letterSpacing: '1px',
             color: inkSoft,
             textTransform: 'uppercase',
-            marginBottom: '8px'
+            marginBottom: '16px',
+            paddingBottom: '6px',
+            borderBottom: `1px dashed ${inkSoft}`,
+            width: '100%',
           }}
         >
-          Registry File Error // Code 404
+          <Tag size={12} />
+          Unstray Registry — Missing File Record
         </div>
 
-        <Title
-          level={1}
-          style={{
-            fontFamily: displayFont,
-            fontSize: '42px',
-            fontWeight: 700,
-            color: ink,
-            margin: '0 0 12px 0',
-            textTransform: 'uppercase',
-            letterSpacing: '-0.5px'
-          }}
-        >
-          Unregistered Route
-        </Title>
-
-        <Paragraph
-          style={{
-            fontFamily: bodyFont,
-            fontSize: '15px',
-            color: inkSoft,
-            lineHeight: 1.6,
-            marginBottom: '32px'
-          }}
-        >
-          The page or file path you are attempting to locate is not recorded in the Unstray directory ledger.
-        </Paragraph>
-
-        {/* ACTION BUTTON */}
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <button
-            onClick={() => navigate('/')}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              fontFamily: monoFont,
-              fontWeight: 700,
-              fontSize: '12px',
-              letterSpacing: '1px',
-              textTransform: 'uppercase',
-              padding: '14px 28px',
-              backgroundColor: ink,
-              color: paperLight,
-              border: 'none',
-              cursor: 'pointer',
-              boxShadow: `4px 4px 0px ${brass}`
-            }}
-          >
-            <ArrowLeft size={16} /> Return To Registry Desk
-          </button>
-        </div>
+        <Result
+          status="404"
+          title={
+            <span
+              style={{
+                fontFamily: displayFont,
+                fontSize: '72px',
+                fontWeight: 700,
+                color: claimRed,
+                letterSpacing: '-1px',
+                lineHeight: 1,
+                display: 'block',
+              }}
+            >
+              404
+            </span>
+          }
+          subTitle={
+            <span
+              style={{
+                color: inkSoft,
+                fontSize: '15px',
+                display: 'block',
+                marginTop: '12px',
+                fontFamily: bodyFont,
+                lineHeight: 1.6,
+              }}
+            >
+              Sorry, the file or case page you visited does not exist in the <strong style={{ color: ink }}>Unstray</strong> registry.
+            </span>
+          }
+          extra={
+            <Button 
+              type="primary" 
+              onClick={() => navigate('/')} 
+              size="large"
+              icon={<ArrowLeft size={16} style={{ marginRight: '6px' }} />}
+              style={{
+                fontFamily: monoFont,
+                fontWeight: 700,
+                letterSpacing: '1px',
+                textTransform: 'uppercase',
+                fontSize: '12px',
+                backgroundColor: ink,
+                borderColor: ink,
+                color: paperLight,
+                borderRadius: 0,
+                height: '46px',
+                padding: '0 28px',
+                boxShadow: `3px 3px 0px ${brass}`,
+                marginTop: '12px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              Back to Registry Home
+            </Button>
+          }
+        />
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { 
   Tabs, 
   Table, 
+  Tag as AntTag, 
   Button, 
   Space, 
   Typography, 
@@ -20,7 +21,7 @@ import {
   MapPin,
   XCircle,
   PlusCircle,
-  FolderLock
+  Tag as TagIcon
 } from 'lucide-react';
 import dayjs from 'dayjs';
 import { useAuth } from '../../contexts/AuthContext';
@@ -37,16 +38,16 @@ const { useBreakpoint } = Grid;
 
 /**
  * ───────────────────────────────────────────────────────────
- * DESIGN TOKENS — "Lost Property Office" identity
+ *  DESIGN TOKENS — "Lost Property Office" identity
  * ───────────────────────────────────────────────────────────
  */
 const ink = "#20303A";       // primary text / stamped ink
 const inkSoft = "#4B5D67";   // secondary ink
 const paper = "#EDE6D6";     // registry paper background
 const paperLight = "#F8F4E9"; // card / ticket paper
-const paperDeep = "#E2D8C1"; // recessed paper
-const claimRed = "#A23E2E";  // LOST tag accent
-const claimGreen = "#3E6C52"; // FOUND tag accent
+// const paperDeep = "#E2D8C1"; // recessed paper (skeletons, wells)
+const claimRed = "#A23E2E";  // LOST tag / alert highlight
+const claimGreen = "#3E6C52"; // FOUND tag
 const brass = "#A9884F";     // grommet / hardware accent
 
 const displayFont = "'Zilla Slab', 'Roboto Slab', Georgia, serif";
@@ -79,8 +80,8 @@ const MyItems: React.FC = () => {
     try {
       setIsLoading(true);
       setHasError(false);
-      // Fetch only items belonging to current user
-      const data = await itemService.getItems({ userId: currentUser.id });
+      // Fetch all items to allow filtering for both reported and claimed items
+      const data = await itemService.getItems();
       setAllItems(data);
     } catch (err) {
       console.error('Failed to load user listings:', err);
@@ -94,18 +95,27 @@ const MyItems: React.FC = () => {
     fetchUserItems();
   }, [currentUser]);
 
-  // Apply tab filtering locally to avoid double round-trips
+  // Apply tab filtering locally
   useEffect(() => {
-    let items = [...allItems];
-    if (activeTab === 'lost') {
-      items = items.filter((i) => i.type === 'LOST');
-    } else if (activeTab === 'found') {
-      items = items.filter((i) => i.type === 'FOUND');
-    } else if (activeTab === 'resolved') {
-      items = items.filter((i) => i.status === 'RESOLVED');
+    if (!currentUser) return;
+    let items = [];
+    if (activeTab === 'claims') {
+      items = allItems.filter((i) => i.claims?.some(c => Number(c.claimerId) === Number(currentUser.id)));
+    } else {
+      // For all other tabs, only show items reported by the current user
+      const userReportedItems = allItems.filter(i => Number(i.reportedBy) === Number(currentUser.id));
+      if (activeTab === 'lost') {
+        items = userReportedItems.filter((i) => i.type === 'LOST');
+      } else if (activeTab === 'found') {
+        items = userReportedItems.filter((i) => i.type === 'FOUND');
+      } else if (activeTab === 'resolved') {
+        items = userReportedItems.filter((i) => i.status === 'RESOLVED');
+      } else {
+        items = userReportedItems;
+      }
     }
     setFilteredItems(items);
-  }, [allItems, activeTab]);
+  }, [allItems, activeTab, currentUser]);
 
   const handleDeleteTrigger = (id: string) => {
     setSelectedItemId(id);
@@ -122,7 +132,7 @@ const MyItems: React.FC = () => {
     setIsActionLoading(true);
     try {
       await itemService.deleteItem(selectedItemId);
-      message.success('Listing expunged from ledger.');
+      message.success('Listing deleted.');
       setAllItems((prev) => prev.filter((i) => i.id !== selectedItemId));
       setIsDeleteOpen(false);
     } catch (err) {
@@ -141,7 +151,7 @@ const MyItems: React.FC = () => {
     setIsActionLoading(true);
     const newStatus: ItemStatus = targetItem.status === 'OPEN' ? 'RESOLVED' : 'OPEN';
     try {
-      const updated = await itemService.updateItem(selectedItemId, { status: newStatus });
+      const updated = await itemService.updateItemStatus(selectedItemId, newStatus);
       message.success(`Status updated to ${newStatus}.`);
       setAllItems((prev) =>
         prev.map((item) => (item.id === selectedItemId ? updated : item))
@@ -155,122 +165,172 @@ const MyItems: React.FC = () => {
     }
   };
 
-  // Ant Design Table Columns for Desktop (Vintage Claim Ledger styling)
+  // Ant Design Table Columns for Desktop
   const tableColumns = [
     {
-      title: 'FILE NO. / ITEM',
+      title: 'Item',
       key: 'item',
       render: (_: any, record: Item) => {
-        const itemImage = record.media && record.media.length > 0 
-          ? record.media[0] 
+        const itemImage = record.imageUrls && record.imageUrls.length > 0 
+          ? record.imageUrls[0] 
           : 'https://images.unsplash.com/photo-1595079676339-1534801ad6cf?w=100&auto=format&fit=crop&q=80';
         return (
           <Space size="middle">
             <img 
               src={itemImage} 
               alt={record.title} 
-              style={{ width: '46px', height: '46px', objectFit: 'cover', border: `1px solid ${ink}` }} 
+              style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: 0, border: `2px solid ${ink}` }} 
             />
             <div>
-              <div style={{ fontFamily: monoFont, fontSize: '11px', color: inkSoft }}>
-                NO. {String(record.id).padStart(5, '0').slice(-5)}
-              </div>
-              <div style={{ fontFamily: displayFont, fontWeight: 700, fontSize: '16px', color: ink }}>{record.title}</div>
-              <Text style={{ fontFamily: monoFont, fontSize: '11px', color: inkSoft, textTransform: 'uppercase' }}>{record.category}</Text>
+              <div style={{ fontWeight: 700, color: ink, fontFamily: displayFont, fontSize: '15px' }}>{record.title}</div>
+              <Text style={{ fontSize: '12px', fontFamily: monoFont, color: inkSoft }}>{record.category}</Text>
             </div>
           </Space>
         );
       }
     },
     {
-      title: 'LOCATION',
+      title: 'Location',
       dataIndex: 'location',
       key: 'location',
       render: (loc: string) => (
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontFamily: bodyFont, fontSize: '13px', color: ink }}>
-          <MapPin size={13} style={{ color: claimRed }} /> {loc}
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontFamily: monoFont, color: ink }}>
+          <MapPin size={13} style={{ color: brass }} /> {loc}
         </span>
       )
     },
     {
-      title: 'CLAIM TYPE',
+      title: 'Type',
       dataIndex: 'type',
       key: 'type',
       render: (type: ItemType) => (
-        <div
-          style={{
-            display: 'inline-block',
-            padding: '2px 8px',
-            border: `1px solid ${type === 'LOST' ? claimRed : claimGreen}`,
+        <AntTag 
+          style={{ 
+            fontWeight: 700, 
+            fontFamily: monoFont, 
+            borderRadius: 0, 
+            border: `1.5px solid ${type === 'LOST' ? claimRed : claimGreen}`,
             color: type === 'LOST' ? claimRed : claimGreen,
-            fontFamily: monoFont,
-            fontSize: '11px',
-            fontWeight: 700,
-            textTransform: 'uppercase'
+            backgroundColor: 'transparent'
           }}
         >
           {type}
-        </div>
+        </AntTag>
       )
     },
     {
-      title: 'STATUS',
+      title: 'Status',
       dataIndex: 'status',
       key: 'status',
       render: (status: ItemStatus) => (
-        <div
-          style={{
-            display: 'inline-block',
-            padding: '2px 8px',
-            border: `1px solid ${status === 'OPEN' ? ink : inkSoft}`,
-            backgroundColor: status === 'OPEN' ? paperDeep : 'transparent',
+        <AntTag 
+          style={{ 
+            fontWeight: 700, 
+            fontFamily: monoFont, 
+            borderRadius: 0, 
+            border: `1.5px solid ${status === 'OPEN' ? ink : inkSoft}`,
             color: status === 'OPEN' ? ink : inkSoft,
-            fontFamily: monoFont,
-            fontSize: '11px',
-            fontWeight: 700,
-            textTransform: 'uppercase'
+            backgroundColor: 'transparent'
           }}
         >
           {status}
-        </div>
+        </AntTag>
       )
     },
     {
-      title: 'LOGGED DATE',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      render: (date: string) => (
-        <span style={{ fontFamily: monoFont, fontSize: '12px', color: inkSoft }}>
-          {dayjs(date).format('YYYY-MM-DD')}
-        </span>
-      ),
+      title: activeTab === 'claims' ? 'My Claim Status' : 'Claims Verification',
+      key: 'claims',
+      render: (_: any, record: Item) => {
+        if (activeTab === 'claims') {
+          // Show the current user's claim status on this item
+          const myClaim = record.claims?.find(c => Number(c.claimerId) === Number(currentUser?.id));
+          if (!myClaim) return <Text style={{ fontFamily: monoFont, color: inkSoft }}>-</Text>;
+          return (
+            <Space direction="vertical" size={2}>
+              <AntTag 
+                style={{ 
+                  fontWeight: 700, 
+                  fontFamily: monoFont, 
+                  borderRadius: 0, 
+                  border: `1.5px solid ${myClaim.status === 'APPROVED' ? claimGreen : myClaim.status === 'REJECTED' ? claimRed : brass}`,
+                  color: myClaim.status === 'APPROVED' ? claimGreen : myClaim.status === 'REJECTED' ? claimRed : brass,
+                  backgroundColor: 'transparent'
+                }}
+              >
+                {myClaim.status}
+              </AntTag>
+              <Link to={`/items/${record.id}`}>
+                <Button type="link" size="small" style={{ padding: 0, height: 'auto', fontSize: '12px', fontFamily: monoFont, color: ink, textDecoration: 'underline' }}>
+                  View Details &rarr;
+                </Button>
+              </Link>
+            </Space>
+          );
+        }
+
+        if (record.type !== 'FOUND') return <Text style={{ fontFamily: monoFont, color: inkSoft }}>-</Text>;
+        const claims = record.claims || [];
+        const pendingCount = claims.filter(c => c.status === 'PENDING').length;
+        
+        if (claims.length === 0) return <Text style={{ fontFamily: monoFont, color: inkSoft }}>No claims yet</Text>;
+
+        return (
+          <Space direction="vertical" size={2}>
+            <AntTag 
+              style={{ 
+                fontWeight: 700, 
+                fontFamily: monoFont, 
+                borderRadius: 0, 
+                border: `1.5px solid ${pendingCount > 0 ? brass : claimGreen}`,
+                color: pendingCount > 0 ? brass : claimGreen,
+                backgroundColor: 'transparent'
+              }}
+            >
+              {claims.length} Claim{claims.length !== 1 ? 's' : ''} ({pendingCount} pending)
+            </AntTag>
+            <Link to={`/items/${record.id}`}>
+              <Button type="link" size="small" style={{ padding: 0, height: 'auto', fontSize: '12px', fontFamily: monoFont, color: ink, textDecoration: 'underline' }}>
+                Manage Claims &rarr;
+              </Button>
+            </Link>
+          </Space>
+        );
+      }
     },
     {
-      title: 'ACTIONS',
+      title: 'Reported Date',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      render: (date: string) => <span style={{ fontFamily: monoFont, fontSize: '13px', color: ink }}>{dayjs(date).format('YYYY-MM-DD')}</span>,
+    },
+    {
+      title: 'Actions',
       key: 'actions',
       render: (_: any, record: Item) => (
-        <Space size="small">
-          <Tooltip title="View case file">
+        <Space size="middle">
+          <Tooltip title="View listing details page">
             <Link to={`/items/${record.id}`}>
-              <Button type="text" style={{ color: ink }} icon={<Eye size={16} />} />
+              <Button type="text" shape="circle" icon={<Eye size={16} style={{ color: ink }} />} />
             </Link>
           </Tooltip>
-          <Tooltip title="Amend details">
+          <Tooltip title="Edit item attributes">
             <Link to={`/items/${record.id}/edit`}>
-              <Button type="text" style={{ color: ink }} icon={<Edit size={16} />} />
+              <Button type="text" shape="circle" icon={<Edit size={16} style={{ color: ink }} />} />
             </Link>
           </Tooltip>
-          <Tooltip title={record.status === 'OPEN' ? 'Mark Resolved' : 'Reopen Case'}>
+          <Tooltip title={record.status === 'OPEN' ? 'Mark as Resolved' : 'Reopen Listing'}>
             <Button 
               type="text" 
+              shape="circle" 
               icon={record.status === 'OPEN' ? <CheckCircle2 size={16} style={{ color: claimGreen }} /> : <XCircle size={16} style={{ color: ink }} />} 
               onClick={() => handleResolveTrigger(record.id)}
             />
           </Tooltip>
-          <Tooltip title="Expunge listing permanently">
+          <Tooltip title="Delete listing permanently">
             <Button 
               type="text" 
               danger 
+              shape="circle" 
               icon={<Trash2 size={16} style={{ color: claimRed }} />} 
               onClick={() => handleDeleteTrigger(record.id)}
             />
@@ -280,74 +340,111 @@ const MyItems: React.FC = () => {
     }
   ];
 
-  // Mobile claim card renderer
+  // Mobile layout component
   const renderMobileCards = () => (
-    <Row gutter={[16, 20]}>
-      {filteredItems.map((item) => (
-        <Col key={item.id} xs={24} sm={12}>
-          <div 
-            style={{ 
-              position: 'relative',
-              backgroundColor: paperLight,
-              border: `2px solid ${ink}`,
-              boxShadow: `4px 4px 0px ${ink}`,
-              padding: '12px'
-            }}
-          >
-            <ItemCard item={item} />
+    <Row gutter={[16, 16]}>
+      {filteredItems.map((item) => {
+        const pendingClaimsCount = item.claims?.filter(c => c.status === 'PENDING').length || 0;
+        return (
+          <Col key={item.id} xs={24} sm={12}>
             <div 
               style={{ 
-                marginTop: '12px', 
-                paddingTop: '10px', 
-                borderTop: `1px dashed ${paperDeep}`,
-                display: 'flex', 
-                justifyContent: 'flex-end',
-                gap: '8px' 
+                position: 'relative',
+                backgroundColor: paperLight,
+                border: `2px solid ${ink}`,
+                boxShadow: `4px 4px 0px ${ink}`,
               }}
             >
-              <Link to={`/items/${item.id}/edit`}>
-                <button 
+              <ItemCard item={item} />
+              
+              {/* Claims Badge for Mobile */}
+              {activeTab === 'claims' ? (() => {
+                const myClaim = item.claims?.find(c => Number(c.claimerId) === Number(currentUser?.id));
+                if (!myClaim) return null;
+                return (
+                  <div style={{ padding: '8px 12px', background: paper, borderTop: `1px dashed ${inkSoft}`, fontSize: '13px', fontFamily: monoFont }}>
+                    <Text strong style={{ color: ink }}>Claim Status: </Text>
+                    <AntTag 
+                      style={{ 
+                        fontWeight: 700, 
+                        fontFamily: monoFont, 
+                        borderRadius: 0, 
+                        border: `1px solid ${myClaim.status === 'APPROVED' ? claimGreen : myClaim.status === 'REJECTED' ? claimRed : brass}`,
+                        color: myClaim.status === 'APPROVED' ? claimGreen : myClaim.status === 'REJECTED' ? claimRed : brass,
+                        backgroundColor: 'transparent'
+                      }}
+                    >
+                      {myClaim.status}
+                    </AntTag>
+                    <Link to={`/items/${item.id}`} style={{ display: 'block', marginTop: '4px', fontSize: '12px', color: ink, textDecoration: 'underline' }}>
+                      View Details &rarr;
+                    </Link>
+                  </div>
+                );
+              })() : (
+                item.type === 'FOUND' && item.claims && item.claims.length > 0 && (
+                  <div style={{ padding: '8px 12px', background: paper, borderTop: `1px dashed ${inkSoft}`, fontSize: '13px', fontFamily: monoFont }}>
+                    <Text strong style={{ color: ink }}>{item.claims.length} Claim(s)</Text> {pendingClaimsCount > 0 && <AntTag style={{ marginLeft: '8px', borderRadius: 0, border: `1px solid ${brass}`, color: brass, backgroundColor: 'transparent', fontFamily: monoFont }}>{pendingClaimsCount} Pending</AntTag>}
+                    <Link to={`/items/${item.id}`} style={{ display: 'block', marginTop: '4px', fontSize: '12px', color: ink, textDecoration: 'underline' }}>
+                      View &amp; Manage Claims &rarr;
+                    </Link>
+                  </div>
+                )
+              )}
+
+              <div 
+                style={{ 
+                  position: 'absolute', 
+                  bottom: '16px', 
+                  right: '16px', 
+                  zIndex: 10,
+                  display: 'flex',
+                  gap: '8px'
+                }}
+              >
+                <Link to={`/items/${item.id}/edit`}>
+                  <Button 
+                    size="small" 
+                    icon={<Edit size={12} />} 
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      fontFamily: monoFont, 
+                      fontSize: '11px', 
+                      textTransform: 'uppercase', 
+                      borderRadius: 0, 
+                      backgroundColor: paper, 
+                      border: `1.5px solid ${ink}`, 
+                      color: ink 
+                    }}
+                  >
+                    Edit
+                  </Button>
+                </Link>
+                <Button 
+                  danger 
+                  size="small" 
+                  icon={<Trash2 size={12} />} 
+                  onClick={() => handleDeleteTrigger(item.id)}
                   style={{ 
                     display: 'flex', 
                     alignItems: 'center', 
-                    gap: '4px',
-                    fontFamily: monoFont,
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    padding: '6px 12px',
-                    backgroundColor: 'transparent',
-                    color: ink,
-                    border: `1px solid ${ink}`,
-                    cursor: 'pointer'
+                    fontFamily: monoFont, 
+                    fontSize: '11px', 
+                    textTransform: 'uppercase', 
+                    borderRadius: 0, 
+                    backgroundColor: 'transparent', 
+                    border: `1.5px solid ${claimRed}`, 
+                    color: claimRed 
                   }}
                 >
-                  <Edit size={12} /> Edit
-                </button>
-              </Link>
-              <button 
-                onClick={() => handleDeleteTrigger(item.id)}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '4px',
-                  fontFamily: monoFont,
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  padding: '6px 12px',
-                  backgroundColor: 'transparent',
-                  color: claimRed,
-                  border: `1px solid ${claimRed}`,
-                  cursor: 'pointer'
-                }}
-              >
-                <Trash2 size={12} /> Delete
-              </button>
+                  Delete
+                </Button>
+              </div>
             </div>
-          </div>
-        </Col>
-      ))}
+          </Col>
+        );
+      })}
     </Row>
   );
 
@@ -355,110 +452,131 @@ const MyItems: React.FC = () => {
     <div 
       style={{ 
         width: '100%', 
-        minHeight: '100vh',
+        minHeight: '100vh', 
         backgroundColor: paper, 
-        backgroundImage: paperTexture,
-        padding: '36px 24px 88px 24px', 
+        backgroundImage: paperTexture, 
+        padding: '48px 24px 80px 24px', 
         fontFamily: bodyFont 
       }}
     >
-      <div style={{ maxWidth: '1240px', margin: '0 auto' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
         
         {/* HEADER SECTION */}
-        <div 
-          style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'flex-start', 
-            flexWrap: 'wrap', 
-            gap: '16px', 
-            borderBottom: `2px solid ${ink}`,
-            paddingBottom: '20px',
-            marginBottom: '28px' 
-          }}
-        >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '28px' }}>
           <div>
-            <div 
-              style={{ 
-                display: 'inline-flex', 
-                alignItems: 'center', 
-                gap: '8px', 
-                fontFamily: monoFont, 
-                fontSize: '11px', 
-                letterSpacing: '1.5px', 
-                color: inkSoft, 
-                textTransform: 'uppercase',
-                marginBottom: '6px' 
-              }}
-            >
-              <FolderLock size={14} style={{ color: brass }} />
-              Filer Personal Registry Ledger
-            </div>
-            <Title 
-              level={2} 
-              style={{ 
-                fontFamily: displayFont, 
-                fontSize: '38px',
-                fontWeight: 700, 
-                color: ink,
-                margin: 0,
-                textTransform: 'uppercase',
-                letterSpacing: '-0.5px'
-              }}
-            >
-              My Reported Cases
-            </Title>
-            <Paragraph style={{ fontFamily: bodyFont, color: inkSoft, margin: '6px 0 0 0', fontSize: '15px' }}>
-              Manage personal claim tickets, amend listing descriptors, or mark returned items as resolved.
-            </Paragraph>
-          </div>
-          
-          <Link to="/report/lost">
-            <button
+            <div
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '8px',
                 fontFamily: monoFont,
-                fontWeight: 700,
                 fontSize: '12px',
-                letterSpacing: '1px',
+                letterSpacing: '1.5px',
+                color: inkSoft,
                 textTransform: 'uppercase',
-                padding: '12px 20px',
-                backgroundColor: ink,
-                color: paperLight,
-                border: 'none',
-                cursor: 'pointer',
-                boxShadow: `3px 3px 0px ${brass}`
+                marginBottom: '10px',
+                paddingBottom: '4px',
+                borderBottom: `1px dashed ${inkSoft}`,
               }}
             >
-              <PlusCircle size={15} /> File New Claim
-            </button>
-          </Link>
+              <TagIcon size={13} />
+              Unstray Registry — Personal Filings
+            </div>
+            <Title 
+              level={2} 
+              style={{ 
+                margin: 0, 
+                fontWeight: 700, 
+                color: ink, 
+                fontFamily: displayFont, 
+                textTransform: 'uppercase', 
+                letterSpacing: '-0.5px', 
+                fontSize: '32px' 
+              }}
+            >
+              My Reported Items
+            </Title>
+            <Paragraph style={{ color: inkSoft, margin: '6px 0 0 0', fontSize: '15px', fontFamily: bodyFont }}>
+              Manage listings you have reported, update case statuses, or delete active posts from the registry desk.
+            </Paragraph>
+          </div>
+          <Space wrap size="middle">
+            <Link to="/report/lost">
+              <Button 
+                type="primary" 
+                icon={<PlusCircle size={16} style={{ marginRight: '6px' }} />}
+                style={{
+                  fontFamily: monoFont,
+                  fontWeight: 700,
+                  fontSize: '12px',
+                  letterSpacing: '0.5px',
+                  textTransform: 'uppercase',
+                  height: '42px',
+                  padding: '0 20px',
+                  backgroundColor: 'transparent',
+                  borderColor: claimRed,
+                  color: claimRed,
+                  borderRadius: 0,
+                  border: `2px solid ${claimRed}`,
+                  transform: 'rotate(-1deg)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                }}
+              >
+                Report Lost Item
+              </Button>
+            </Link>
+            <Link to="/report/found">
+              <Button 
+                type="primary" 
+                icon={<PlusCircle size={16} style={{ marginRight: '6px' }} />} 
+                style={{ 
+                  fontFamily: monoFont,
+                  fontWeight: 700,
+                  fontSize: '12px',
+                  letterSpacing: '0.5px',
+                  textTransform: 'uppercase',
+                  height: '42px',
+                  padding: '0 20px',
+                  backgroundColor: 'transparent',
+                  borderColor: claimGreen,
+                  color: claimGreen,
+                  borderRadius: 0,
+                  border: `2px solid ${claimGreen}`,
+                  transform: 'rotate(1deg)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                }}
+              >
+                Report Found Item
+              </Button>
+            </Link>
+          </Space>
         </div>
 
         {/* FILTER TABS */}
         <Tabs
           activeKey={activeTab}
           onChange={(key) => setActiveTab(key)}
-          style={{ marginBottom: '28px', fontFamily: monoFont }}
+          style={{ marginBottom: '24px', fontFamily: monoFont }}
           items={[
-            { label: 'ALL FILED RECORDS', key: 'all' },
-            { label: 'MY LOST ITEMS', key: 'lost' },
-            { label: 'MY FOUND ITEMS', key: 'found' },
-            { label: 'RESOLVED / CLOSED', key: 'resolved' },
+            { label: 'My Reported Items', key: 'all' },
+            { label: 'My Lost Items', key: 'lost' },
+            { label: 'My Found Items', key: 'found' },
+            { label: 'Resolved', key: 'resolved' },
+            { label: 'My Claims', key: 'claims' },
           ]}
         />
 
         {/* RENDER LISTS */}
         {isLoading ? (
-          <LoadingState message="Retrieving your case files..." />
+          <LoadingState message="Loading your items list..." />
         ) : hasError ? (
           <ErrorState onRetry={fetchUserItems} />
         ) : filteredItems.length === 0 ? (
           <EmptyState 
-            message={`No registered records found under this section tab.`} 
-            actionText="File a Lost Report" 
+            message={`No items found in this tab. Click below to create a listing.`} 
+            actionText="Report Lost Item" 
             onAction={() => navigate('/report/lost')} 
           />
         ) : (
@@ -466,19 +584,22 @@ const MyItems: React.FC = () => {
           screens.xs || screens.sm ? (
             renderMobileCards()
           ) : (
-            <div 
-              style={{ 
-                backgroundColor: paperLight, 
-                border: `2px solid ${ink}`, 
+            <div
+              style={{
+                border: `2px solid ${ink}`,
                 boxShadow: `6px 6px 0px ${ink}`,
-                overflow: 'hidden'
+                backgroundColor: paperLight,
+                overflow: 'hidden',
               }}
             >
               <Table 
                 dataSource={filteredItems.map(item => ({ ...item, key: item.id }))} 
                 columns={tableColumns} 
                 pagination={{ pageSize: 8 }}
-                style={{ fontFamily: bodyFont }}
+                style={{ 
+                  backgroundColor: paperLight,
+                  fontFamily: bodyFont,
+                }}
               />
             </div>
           )
@@ -487,9 +608,9 @@ const MyItems: React.FC = () => {
         {/* CONFIRM DELETE MODAL */}
         <ConfirmDialog
           open={isDeleteOpen}
-          title="Expunge Listing Permanently?"
-          content="Are you sure you want to permanently delete this record from Unstray? Other community filers will no longer be able to match against this case entry."
-          okText="Expunge Record"
+          title="Delete Listing permanently?"
+          content="Are you sure you want to delete this listing from Unstray? Other users will no longer be able to search or match against this item description."
+          okText="Delete Listing"
           danger
           confirmLoading={isActionLoading}
           onConfirm={handleDeleteConfirm}
@@ -503,7 +624,7 @@ const MyItems: React.FC = () => {
         <ConfirmDialog
           open={isResolveOpen}
           title="Update Listing Status?"
-          content="Toggle this case between OPEN and RESOLVED status. Reopened records resume active matching; resolved entries are closed in the archive."
+          content="Would you like to toggle the status of this item listing between OPEN and RESOLVED? Reopened items appear in public queries; resolved items are archived."
           okText="Update Status"
           confirmLoading={isActionLoading}
           onConfirm={handleResolveConfirm}

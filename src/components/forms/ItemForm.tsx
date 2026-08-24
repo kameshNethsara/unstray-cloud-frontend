@@ -2,8 +2,7 @@ import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Form, Input, Select, DatePicker, Row, Col } from 'antd';
-import { PlusCircle, Search, Save } from 'lucide-react';
+import { Form, Input, Select, DatePicker, Button, Radio, Row, Col } from 'antd';
 import dayjs from 'dayjs';
 import { ITEM_CATEGORIES, type ItemType } from '../../types/item';
 import MediaUploader from './MediaUploader';
@@ -12,19 +11,18 @@ const { TextArea } = Input;
 
 /**
  * ───────────────────────────────────────────────────────────
- * DESIGN TOKENS — "Lost Property Office" identity
+ *  DESIGN TOKENS — "Lost Property Office" identity
  * ───────────────────────────────────────────────────────────
  */
 const ink = "#20303A";       // primary text / stamped ink
-const inkSoft = "#4B5D67";   // secondary ink
+// const inkSoft = "#4B5D67";   // secondary ink
 const paper = "#EDE6D6";     // registry paper background
 const paperLight = "#F8F4E9"; // card / ticket paper
-const paperDeep = "#E2D8C1"; // recessed paper
-const claimRed = "#A23E2E";  // LOST tag accent
-const claimGreen = "#3E6C52"; // FOUND tag accent
-// const brass = "#A9884F";     // grommet / hardware accent
+const claimRed = "#A23E2E";  // LOST tag / alert highlight
+const claimGreen = "#3E6C52"; // FOUND tag
+const brass = "#A9884F";     // grommet / hardware accent
 
-const displayFont = "'Zilla Slab', 'Roboto Slab', Georgia, serif";
+// const displayFont = "'Zilla Slab', 'Roboto Slab', Georgia, serif";
 const monoFont = "'IBM Plex Mono', 'Roboto Mono', monospace";
 const bodyFont = "'Inter', 'Work Sans', system-ui, sans-serif";
 
@@ -45,13 +43,24 @@ const itemFormSchema = z.object({
   date: z.any().refine((val) => val !== null && val !== undefined, {
     message: 'Date is required',
   }),
-  media: z.array(z.string()),
+  imageUrls: z.array(z.string()).default([]),
 });
 
+// Explicitly define input and output form types to satisfy react-hook-form + zodResolver
 export type ItemFormData = z.infer<typeof itemFormSchema>;
+type ItemFormInput = z.input<typeof itemFormSchema>;
 
 interface ItemFormProps {
-  initialValues?: Partial<ItemFormData & { dateString?: string }>;
+  initialValues?: {
+    type?: ItemType;
+    title?: string;
+    category?: string;
+    description?: string;
+    location?: string;
+    date?: any;
+    dateString?: string;
+    imageUrls?: string[];
+  };
   onSubmit: (data: ItemFormData & { formattedDate: string }) => void;
   isSubmitting?: boolean;
   submitButtonText?: string;
@@ -62,32 +71,30 @@ const ItemForm: React.FC<ItemFormProps> = ({
   initialValues,
   onSubmit,
   isSubmitting = false,
-  submitButtonText = 'File Registry Entry',
+  submitButtonText = 'Submit Report',
   fixedType,
 }) => {
-  // Transform initial values (e.g. date conversion for Dayjs)
-  const defaultValues: ItemFormData = {
-    type: fixedType || initialValues?.type || 'LOST',
-    title: initialValues?.title || '',
-    category: initialValues?.category || '',
-    description: initialValues?.description || '',
-    location: initialValues?.location || '',
-    date: initialValues?.date 
-      ? dayjs(initialValues.date) 
-      : initialValues?.dateString 
-        ? dayjs(initialValues.dateString) 
-        : dayjs(),
-    media: initialValues?.media || [],
-  };
-
   const {
     control,
     handleSubmit,
-    watch,
     formState: { errors },
-  } = useForm<ItemFormData>({
+  } = useForm<ItemFormInput, any, ItemFormData>({
     resolver: zodResolver(itemFormSchema),
-    defaultValues,
+    defaultValues: {
+      type: fixedType || initialValues?.type || 'LOST',
+      title: initialValues?.title || '',
+      category: initialValues?.category || '',
+      description: initialValues?.description || '',
+      location: initialValues?.location || '',
+      date: initialValues?.date 
+        ? dayjs(initialValues.date) 
+        : initialValues?.dateString 
+          ? dayjs(initialValues.dateString) 
+          : dayjs(),
+      imageUrls: initialValues?.imageUrls && initialValues.imageUrls.length > 0 
+        ? initialValues.imageUrls 
+        : [],
+    },
   });
 
   const onFormSubmit = (data: ItemFormData) => {
@@ -98,101 +105,76 @@ const ItemForm: React.FC<ItemFormProps> = ({
     });
   };
 
-  // Watch type for dynamic styling
-  const currentType = watch('type');
-  const typeAccentColor = currentType === 'LOST' ? claimRed : claimGreen;
+  const labelStyle: React.CSSProperties = {
+    fontFamily: monoFont,
+    fontSize: '11px',
+    fontWeight: 700,
+    color: ink,
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+  };
 
   return (
     <Form layout="vertical" onFinish={handleSubmit(onFormSubmit)} style={{ fontFamily: bodyFont }}>
-      
-      {/* SECTION HEADER */}
-      <div 
-        style={{ 
-          fontFamily: monoFont, 
-          fontSize: '12px', 
-          fontWeight: 700, 
-          letterSpacing: '1px', 
-          color: inkSoft, 
-          textTransform: 'uppercase',
-          marginBottom: '20px',
-          borderBottom: `2px dashed ${paperDeep}`,
-          paddingBottom: '8px'
-        }}
-      >
-        Record Attributes // Fields Marked * Required
-      </div>
-
       <Row gutter={32}>
-        
+
         {/* LEFT COLUMN: BASIC METADATA */}
         <Col xs={24} lg={14}>
-          
-          {/* TYPE FIELD (CUSTOM STAMPED RADIO BUTTONS) */}
+
+          {/* TYPE FIELD */}
           {!fixedType && (
             <Form.Item
-              label={<span style={{ fontFamily: monoFont, fontSize: '11px', textTransform: 'uppercase', color: inkSoft, fontWeight: 700 }}>Claim Type Classification *</span>}
+              label={<span style={labelStyle}>Report Type</span>}
               validateStatus={errors.type ? 'error' : ''}
-              help={errors.type?.message ? <span style={{ fontFamily: monoFont, fontSize: '11px', color: claimRed }}>{errors.type.message}</span> : null}
+              help={errors.type?.message}
               required
-              style={{ marginBottom: '24px' }}
             >
               <Controller
                 name="type"
                 control={control}
                 render={({ field }) => (
-                  <div style={{ display: 'flex', gap: '16px' }}>
-                    <button
-                      type="button"
-                      onClick={() => field.onChange('LOST')}
-                      style={{
-                        flex: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        padding: '12px',
+                  <Radio.Group {...field} buttonStyle="solid" style={{ width: '100%' }}>
+                    <Radio.Button 
+                      value="LOST" 
+                      style={{ 
+                        width: '50%', 
+                        textAlign: 'center', 
+                        borderColor: ink, 
+                        backgroundColor: field.value === 'LOST' ? claimRed : paper,
+                        color: field.value === 'LOST' ? paperLight : ink,
                         fontFamily: monoFont,
                         fontWeight: 700,
-                        fontSize: '13px',
+                        fontSize: '12px',
                         textTransform: 'uppercase',
-                        letterSpacing: '1px',
-                        cursor: 'pointer',
-                        border: `2px solid ${field.value === 'LOST' ? claimRed : inkSoft}`,
-                        backgroundColor: field.value === 'LOST' ? claimRed : 'transparent',
-                        color: field.value === 'LOST' ? paperLight : inkSoft,
-                        boxShadow: field.value === 'LOST' ? `3px 3px 0px ${ink}` : 'none',
-                        transition: 'all 0.2s ease'
+                        borderRadius: 0,
+                        height: '42px',
+                        lineHeight: '40px',
+                        boxShadow: field.value === 'LOST' ? `2px 2px 0px ${ink}` : 'none'
                       }}
                     >
-                      <Search size={16} /> LOST ITEM
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => field.onChange('FOUND')}
-                      style={{
-                        flex: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        padding: '12px',
+                      LOST ITEM
+                    </Radio.Button>
+                    <Radio.Button 
+                      value="FOUND" 
+                      style={{ 
+                        width: '50%', 
+                        textAlign: 'center', 
+                        borderColor: ink, 
+                        backgroundColor: field.value === 'FOUND' ? claimGreen : paper,
+                        color: field.value === 'FOUND' ? paperLight : ink,
                         fontFamily: monoFont,
                         fontWeight: 700,
-                        fontSize: '13px',
+                        fontSize: '12px',
                         textTransform: 'uppercase',
-                        letterSpacing: '1px',
-                        cursor: 'pointer',
-                        border: `2px solid ${field.value === 'FOUND' ? claimGreen : inkSoft}`,
-                        backgroundColor: field.value === 'FOUND' ? claimGreen : 'transparent',
-                        color: field.value === 'FOUND' ? paperLight : inkSoft,
-                        boxShadow: field.value === 'FOUND' ? `3px 3px 0px ${ink}` : 'none',
-                        transition: 'all 0.2s ease'
+                        borderRadius: 0,
+                        height: '42px',
+                        lineHeight: '40px',
+                        boxShadow: field.value === 'FOUND' ? `2px 2px 0px ${ink}` : 'none'
                       }}
                     >
-                      <PlusCircle size={16} /> FOUND ITEM
-                    </button>
-                  </div>
+                      FOUND ITEM
+                    </Radio.Button>
+                  </Radio.Group>
                 )}
               />
             </Form.Item>
@@ -200,11 +182,10 @@ const ItemForm: React.FC<ItemFormProps> = ({
 
           {/* TITLE FIELD */}
           <Form.Item
-            label={<span style={{ fontFamily: monoFont, fontSize: '11px', textTransform: 'uppercase', color: inkSoft, fontWeight: 700 }}>Item Title / Designation *</span>}
+            label={<span style={labelStyle}>Item Title</span>}
             validateStatus={errors.title ? 'error' : ''}
-            help={errors.title?.message ? <span style={{ fontFamily: monoFont, fontSize: '11px', color: claimRed }}>{errors.title.message}</span> : null}
+            help={errors.title?.message}
             required
-            style={{ marginBottom: '20px' }}
           >
             <Controller
               name="title"
@@ -214,16 +195,14 @@ const ItemForm: React.FC<ItemFormProps> = ({
                   {...field} 
                   placeholder="e.g. iPhone 15 Pro, Black Trifold Wallet" 
                   maxLength={100} 
+                  size="large" 
                   style={{
-                    fontFamily: displayFont,
-                    fontSize: '18px',
-                    fontWeight: 700,
-                    color: ink,
+                    backgroundColor: paper,
+                    border: `1.5px solid ${ink}`,
                     borderRadius: 0,
-                    border: `1px solid ${ink}`,
-                    height: '48px',
-                    backgroundColor: paper
-                  }} 
+                    fontFamily: bodyFont,
+                    color: ink,
+                  }}
                 />
               )}
             />
@@ -233,11 +212,10 @@ const ItemForm: React.FC<ItemFormProps> = ({
           <Row gutter={16}>
             <Col xs={24} sm={12}>
               <Form.Item
-                label={<span style={{ fontFamily: monoFont, fontSize: '11px', textTransform: 'uppercase', color: inkSoft, fontWeight: 700 }}>Category *</span>}
+                label={<span style={labelStyle}>Category</span>}
                 validateStatus={errors.category ? 'error' : ''}
-                help={errors.category?.message ? <span style={{ fontFamily: monoFont, fontSize: '11px', color: claimRed }}>{errors.category.message}</span> : null}
+                help={errors.category?.message}
                 required
-                style={{ marginBottom: '20px' }}
               >
                 <Controller
                   name="category"
@@ -245,14 +223,9 @@ const ItemForm: React.FC<ItemFormProps> = ({
                   render={({ field }) => (
                     <Select 
                       {...field} 
-                      placeholder="Select category" 
-                      style={{ 
-                        fontFamily: monoFont, 
-                        borderRadius: 0, 
-                        width: '100%',
-                        height: '42px'
-                      }} 
+                      placeholder="Select item category" 
                       size="large"
+                      style={{ width: '100%' }}
                     >
                       {ITEM_CATEGORIES.map((cat) => (
                         <Select.Option key={cat} value={cat}>
@@ -264,14 +237,13 @@ const ItemForm: React.FC<ItemFormProps> = ({
                 />
               </Form.Item>
             </Col>
-            
+
             <Col xs={24} sm={12}>
               <Form.Item
-                label={<span style={{ fontFamily: monoFont, fontSize: '11px', textTransform: 'uppercase', color: inkSoft, fontWeight: 700 }}>Date Logged *</span>}
+                label={<span style={labelStyle}>Date Lost / Found</span>}
                 validateStatus={errors.date ? 'error' : ''}
-                help={errors.date?.message ? <span style={{ fontFamily: monoFont, fontSize: '11px', color: claimRed }}>{errors.date.message as string}</span> : null}
+                help={errors.date?.message as string}
                 required
-                style={{ marginBottom: '20px' }}
               >
                 <Controller
                   name="date"
@@ -281,12 +253,11 @@ const ItemForm: React.FC<ItemFormProps> = ({
                       {...field} 
                       style={{ 
                         width: '100%',
-                        fontFamily: monoFont,
+                        backgroundColor: paper,
+                        border: `1.5px solid ${ink}`,
                         borderRadius: 0,
-                        border: `1px solid ${ink}`,
-                        height: '42px',
-                        backgroundColor: paper
                       }} 
+                      size="large" 
                       maxDate={dayjs()} 
                       format="YYYY-MM-DD"
                     />
@@ -298,11 +269,10 @@ const ItemForm: React.FC<ItemFormProps> = ({
 
           {/* LOCATION FIELD */}
           <Form.Item
-            label={<span style={{ fontFamily: monoFont, fontSize: '11px', textTransform: 'uppercase', color: inkSoft, fontWeight: 700 }}>Location Sector *</span>}
+            label={<span style={labelStyle}>Location</span>}
             validateStatus={errors.location ? 'error' : ''}
-            help={errors.location?.message ? <span style={{ fontFamily: monoFont, fontSize: '11px', color: claimRed }}>{errors.location.message}</span> : null}
+            help={errors.location?.message}
             required
-            style={{ marginBottom: '20px' }}
           >
             <Controller
               name="location"
@@ -311,14 +281,14 @@ const ItemForm: React.FC<ItemFormProps> = ({
                 <Input 
                   {...field} 
                   placeholder="e.g. Science Library, 2nd floor study area" 
+                  size="large" 
                   style={{
-                    fontFamily: bodyFont,
-                    fontSize: '14px',
+                    backgroundColor: paper,
+                    border: `1.5px solid ${ink}`,
                     borderRadius: 0,
-                    border: `1px solid ${ink}`,
-                    height: '42px',
-                    backgroundColor: paper
-                  }} 
+                    fontFamily: bodyFont,
+                    color: ink,
+                  }}
                 />
               )}
             />
@@ -326,11 +296,10 @@ const ItemForm: React.FC<ItemFormProps> = ({
 
           {/* DESCRIPTION FIELD */}
           <Form.Item
-            label={<span style={{ fontFamily: monoFont, fontSize: '11px', textTransform: 'uppercase', color: inkSoft, fontWeight: 700 }}>Detailed Identification Marks *</span>}
+            label={<span style={labelStyle}>Detailed Description</span>}
             validateStatus={errors.description ? 'error' : ''}
-            help={errors.description?.message ? <span style={{ fontFamily: monoFont, fontSize: '11px', color: claimRed }}>{errors.description.message}</span> : null}
+            help={errors.description?.message}
             required
-            style={{ marginBottom: '20px' }}
           >
             <Controller
               name="description"
@@ -338,17 +307,16 @@ const ItemForm: React.FC<ItemFormProps> = ({
               render={({ field }) => (
                 <TextArea
                   {...field}
-                  placeholder="Provide distinct characteristics (colors, stickers, brand, case, or contents of the bag/wallet) to help others identify the item."
+                  placeholder="Provide distinct characteristics to help others identify the item (e.g. scratches, lock screen wallpaper, distinct keychains)."
                   rows={6}
                   maxLength={1000}
                   showCount
                   style={{
-                    fontFamily: bodyFont,
-                    fontSize: '14px',
-                    borderRadius: 0,
-                    border: `1px solid ${ink}`,
                     backgroundColor: paper,
-                    lineHeight: 1.6
+                    border: `1.5px solid ${ink}`,
+                    borderRadius: 0,
+                    fontFamily: bodyFont,
+                    color: ink,
                   }}
                 />
               )}
@@ -356,36 +324,19 @@ const ItemForm: React.FC<ItemFormProps> = ({
           </Form.Item>
         </Col>
 
-        {/* RIGHT COLUMN: MEDIA UPLOAD & ACTIONS */}
+        {/* RIGHT COLUMN: MULTIPLE MEDIA UPLOAD */}
         <Col xs={24} lg={10}>
-          
-          <div 
-            style={{ 
-              fontFamily: monoFont, 
-              fontSize: '12px', 
-              fontWeight: 700, 
-              letterSpacing: '1px', 
-              color: inkSoft, 
-              textTransform: 'uppercase',
-              marginBottom: '20px',
-              borderBottom: `2px dashed ${paperDeep}`,
-              paddingBottom: '8px'
-            }}
-          >
-            Evidence & Appendices
-          </div>
-
           <Form.Item
-            validateStatus={errors.media ? 'error' : ''}
-            help={errors.media?.message ? <span style={{ fontFamily: monoFont, fontSize: '11px', color: claimRed }}>{errors.media.message}</span> : null}
-            style={{ marginBottom: '32px' }}
+            label={<span style={labelStyle}>Upload Images (Up to 5)</span>}
+            validateStatus={errors.imageUrls ? 'error' : ''}
+            help={errors.imageUrls?.message}
           >
             <Controller
-              name="media"
+              name="imageUrls"
               control={control}
               render={({ field }) => (
                 <MediaUploader
-                  value={field.value}
+                  value={field.value || []}
                   onChange={field.onChange}
                   maxCount={5}
                 />
@@ -394,33 +345,29 @@ const ItemForm: React.FC<ItemFormProps> = ({
           </Form.Item>
 
           {/* ACTIONS */}
-          <div style={{ marginTop: '24px' }}>
-            <button
-              type="submit"
-              disabled={isSubmitting}
+          <div style={{ marginTop: '32px' }}>
+            <Button 
+              size="large" 
+              type="primary" 
+              htmlType="submit" 
+              loading={isSubmitting} 
+              block
               style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
                 fontFamily: monoFont,
                 fontWeight: 700,
-                fontSize: '14px',
+                fontSize: '13px',
                 textTransform: 'uppercase',
                 letterSpacing: '1px',
-                padding: '16px',
+                height: '48px',
                 backgroundColor: ink,
+                borderColor: ink,
                 color: paperLight,
-                border: 'none',
-                cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                boxShadow: `4px 4px 0px ${typeAccentColor}`,
-                opacity: isSubmitting ? 0.8 : 1,
-                transition: 'all 0.2s ease'
+                borderRadius: 0,
+                boxShadow: `4px 4px 0px ${brass}`,
               }}
             >
-              <Save size={18} /> {isSubmitting ? 'Logging Entry...' : submitButtonText}
-            </button>
+              {submitButtonText}
+            </Button>
           </div>
         </Col>
 

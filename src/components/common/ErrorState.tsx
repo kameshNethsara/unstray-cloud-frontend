@@ -1,19 +1,17 @@
 import React from 'react';
-import { Typography } from 'antd';
-import { AlertTriangle, RefreshCw, ArrowLeft } from 'lucide-react';
-
-const { Paragraph } = Typography;
+import { Result, Button } from 'antd';
+import { AlertTriangle } from 'lucide-react';
 
 /**
  * ───────────────────────────────────────────────────────────
- * DESIGN TOKENS — "Lost Property Office" identity
+ *  DESIGN TOKENS — "Lost Property Office" identity
  * ───────────────────────────────────────────────────────────
  */
 const ink = "#20303A";       // primary text / stamped ink
 const inkSoft = "#4B5D67";   // secondary ink
 const paper = "#EDE6D6";     // registry paper background
 const paperLight = "#F8F4E9"; // card / ticket paper
-const claimRed = "#A23E2E";  // LOST tag accent
+const claimRed = "#A23E2E";  // LOST tag / alert highlight
 const brass = "#A9884F";     // grommet / hardware accent
 
 const displayFont = "'Zilla Slab', 'Roboto Slab', Georgia, serif";
@@ -28,8 +26,8 @@ interface ErrorStateProps {
 }
 
 const ErrorState: React.FC<ErrorStateProps> = ({
-  title = 'Registry Network Disruption',
-  message = 'Unable to connect to the Unstray directory. Please verify your connection and attempt to re-sync.',
+  title = 'Registry Communication Fault',
+  message = 'Unable to connect to the Unstray Registry. Please check your network connection and try again.',
   onRetry,
   onGoBack,
 }) => {
@@ -37,9 +35,8 @@ const ErrorState: React.FC<ErrorStateProps> = ({
     <div
       style={{
         display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
         justifyContent: 'center',
+        alignItems: 'center',
         padding: '3rem 1.5rem',
         width: '100%',
         fontFamily: bodyFont,
@@ -47,141 +44,93 @@ const ErrorState: React.FC<ErrorStateProps> = ({
     >
       <div
         style={{
+          maxWidth: '560px',
           width: '100%',
-          maxWidth: '520px',
           backgroundColor: paperLight,
           border: `2px solid ${ink}`,
-          borderTop: `6px solid ${claimRed}`,
-          boxShadow: `8px 8px 0px ${ink}`,
-          padding: '40px 32px',
+          boxShadow: `6px 6px 0px ${ink}`,
+          padding: '36px 24px',
           textAlign: 'center',
-          position: 'relative',
         }}
       >
-        {/* Grommet Accent */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '14px',
-            right: '14px',
-            width: '12px',
-            height: '12px',
-            borderRadius: '50%',
-            border: `2px solid ${brass}`,
-            backgroundColor: paper,
-          }}
-        />
-
-        {/* STAMP BADGE */}
-        <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '10px',
-            border: `2px solid ${claimRed}`,
-            color: claimRed,
-            marginBottom: '16px',
-            transform: 'rotate(-2deg)',
-          }}
-        >
-          <AlertTriangle size={32} />
-        </div>
-
-        {/* SUBHEADER TAG */}
-        <div
-          style={{
-            fontFamily: monoFont,
-            fontSize: '11px',
-            letterSpacing: '1.5px',
-            color: claimRed,
-            textTransform: 'uppercase',
-            marginBottom: '6px',
-            fontWeight: 700,
-          }}
-        >
-          SYSTEM EXCEPTION // LEDGER ACCESS ERROR
-        </div>
-
-        {/* TITLE */}
-        <div
-          style={{
-            fontFamily: displayFont,
-            fontSize: '26px',
-            fontWeight: 700,
-            color: ink,
-            textTransform: 'uppercase',
-            letterSpacing: '-0.5px',
-            marginBottom: '10px',
-          }}
-        >
-          {title}
-        </div>
-
-        {/* MESSAGE */}
-        <Paragraph
-          style={{
-            fontFamily: bodyFont,
-            fontSize: '14px',
-            color: inkSoft,
-            lineHeight: 1.6,
-            marginBottom: '28px',
-          }}
-        >
-          {message}
-        </Paragraph>
-
-        {/* ACTION BUTTONS */}
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          {onGoBack && (
-            <button
-              type="button"
-              onClick={onGoBack}
+        <Result
+          icon={
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+              <AlertTriangle size={44} style={{ color: claimRed }} />
+            </div>
+          }
+          title={
+            <span
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                fontFamily: monoFont,
-                fontWeight: 700,
-                fontSize: '12px',
-                textTransform: 'uppercase',
-                padding: '10px 20px',
-                backgroundColor: 'transparent',
+                fontFamily: displayFont,
                 color: ink,
-                border: `1px solid ${ink}`,
-                cursor: 'pointer',
-              }}
-            >
-              <ArrowLeft size={14} /> Go Back
-            </button>
-          )}
-
-          {onRetry && (
-            <button
-              type="button"
-              onClick={onRetry}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                fontFamily: monoFont,
                 fontWeight: 700,
-                fontSize: '12px',
+                fontSize: '22px',
                 textTransform: 'uppercase',
-                padding: '10px 20px',
-                backgroundColor: ink,
-                color: paperLight,
-                border: 'none',
-                cursor: 'pointer',
-                boxShadow: `3px 3px 0px ${brass}`,
+                letterSpacing: '-0.5px',
               }}
             >
-              <RefreshCw size={14} /> Re-Sync Connection
-            </button>
-          )}
-        </div>
+              {title}
+            </span>
+          }
+          subTitle={
+            <span
+              style={{
+                fontFamily: bodyFont,
+                color: inkSoft,
+                fontSize: '14px',
+                lineHeight: 1.5,
+              }}
+            >
+              {message}
+            </span>
+          }
+          extra={
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '12px' }}>
+              {onGoBack && (
+                <Button
+                  onClick={onGoBack}
+                  style={{
+                    borderRadius: 0,
+                    backgroundColor: paper,
+                    border: `1.5px solid ${ink}`,
+                    color: ink,
+                    fontFamily: monoFont,
+                    fontWeight: 600,
+                    fontSize: '12px',
+                    textTransform: 'uppercase',
+                    height: '40px',
+                    padding: '0 20px',
+                  }}
+                >
+                  Go Back
+                </Button>
+              )}
+              {onRetry && (
+                <Button
+                  type="primary"
+                  onClick={onRetry}
+                  style={{
+                    borderRadius: 0,
+                    backgroundColor: ink,
+                    borderColor: ink,
+                    color: paperLight,
+                    fontFamily: monoFont,
+                    fontWeight: 700,
+                    fontSize: '12px',
+                    textTransform: 'uppercase',
+                    height: '40px',
+                    padding: '0 20px',
+                    boxShadow: `2px 2px 0px ${brass}`,
+                  }}
+                >
+                  Try Again
+                </Button>
+              )}
+            </div>
+          }
+          style={{ padding: 0 }}
+        />
       </div>
     </div>
   );

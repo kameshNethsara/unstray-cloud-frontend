@@ -17,17 +17,57 @@ import MyItems from './pages/MyItems/MyItems';
 import Profile from './pages/Profile/Profile';
 import NotFound from './pages/NotFound/NotFound';
 
+/**
+ * ───────────────────────────────────────────────────────────
+ *  DESIGN TOKENS — "Lost Property Office" identity
+ * ───────────────────────────────────────────────────────────
+ */
+const ink = "#20303A";       // primary brand / stamped ink
+const inkSoft = "#4B5D67";   // secondary text
+const paper = "#EDE6D6";     // registry paper background
+const paperLight = "#F8F4E9"; // card / modal background
+const claimRed = "#A23E2E";  // LOST tag / alert
+const claimGreen = "#3E6C52"; // FOUND tag / success
+const brass = "#A9884F";     // hardware accent / warning
+
 const App: React.FC = () => {
   return (
     <ConfigProvider
       theme={{
         token: {
-          colorPrimary: '#1890ff',
-          colorSuccess: '#52c41a',
-          colorWarning: '#faad14',
-          colorError: '#ff4d4f',
-          borderRadius: 8,
-          fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          colorPrimary: ink,
+          colorSuccess: claimGreen,
+          colorWarning: brass,
+          colorError: claimRed,
+          colorBgContainer: paperLight,
+          colorBgLayout: paper,
+          colorText: ink,
+          colorTextSecondary: inkSoft,
+          borderRadius: 0,
+          fontFamily: "'Inter', 'Work Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+        },
+        components: {
+          Card: {
+            colorBgContainer: paperLight,
+            borderRadiusLG: 0,
+          },
+          Button: {
+            borderRadius: 0,
+            borderRadiusSM: 0,
+            borderRadiusLG: 0,
+          },
+          Input: {
+            borderRadius: 0,
+            colorBgContainer: paper,
+          },
+          Select: {
+            borderRadius: 0,
+            colorBgContainer: paper,
+          },
+          Modal: {
+            contentBg: paperLight,
+            borderRadiusLG: 0,
+          },
         },
       }}
     >

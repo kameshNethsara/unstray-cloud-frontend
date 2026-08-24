@@ -63,7 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateUserContext = (updatedUser: User) => {
     setUser(updatedUser);
-    localStorage.setItem('findora_user', JSON.stringify(updatedUser));
+    localStorage.setItem('unstray_user', JSON.stringify(updatedUser));
   };
 
   const value: AuthContextType = {

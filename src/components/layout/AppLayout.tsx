@@ -9,7 +9,7 @@ import {
   FolderHeart, 
   LogOut, 
   Menu as MenuIcon,
-  Tag,
+  // Tag as TagIcon
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -18,7 +18,7 @@ const { useBreakpoint } = Grid;
 
 /**
  * ───────────────────────────────────────────────────────────
- * DESIGN TOKENS — "Lost Property Office" identity
+ *  DESIGN TOKENS — "Lost Property Office" identity
  * ───────────────────────────────────────────────────────────
  */
 const ink = "#20303A";       // primary text / stamped ink
@@ -26,8 +26,8 @@ const inkSoft = "#4B5D67";   // secondary ink
 const paper = "#EDE6D6";     // registry paper background
 const paperLight = "#F8F4E9"; // card / ticket paper
 const paperDeep = "#E2D8C1"; // recessed paper
-const claimRed = "#A23E2E";  // LOST tag accent
-const claimGreen = "#3E6C52"; // FOUND tag accent
+const claimRed = "#A23E2E";  // LOST tag / alert highlight
+const claimGreen = "#3E6C52"; // FOUND tag
 const brass = "#A9884F";     // grommet / hardware accent
 
 const displayFont = "'Zilla Slab', 'Roboto Slab', Georgia, serif";
@@ -36,20 +36,6 @@ const bodyFont = "'Inter', 'Work Sans', system-ui, sans-serif";
 
 const paperTexture =
   "repeating-linear-gradient(135deg, rgba(32,48,58,0.025) 0px, rgba(32,48,58,0.025) 1px, transparent 1px, transparent 10px)";
-
-// Fixed header height + a matching menu line-height keeps the logo,
-// nav items, and header buttons all sitting on the same baseline
-// instead of drifting to different vertical centers.
-const HEADER_HEIGHT = 72;
-
-// One shared height for every header-level button/avatar row so
-// nothing looks taller or shorter than its neighbour.
-const headerControlStyle: React.CSSProperties = {
-  height: '38px',
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-};
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -65,7 +51,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate('/');
     setIsMobileMenuOpen(false);
   };
 
@@ -81,22 +67,17 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     return '';
   };
 
-  // Header/footer share the same responsive horizontal rhythm so
-  // both edges of the page line up instead of using different
-  // paddings at different breakpoints.
-  const outerPaddingInline = screens.xs ? 16 : screens.md ? 40 : 24;
-
-  // User Dropdown Menu for Desktop (Ledger Theme)
+  // User Dropdown Menu for Desktop
   const userMenuItems = [
     {
       key: 'profile',
-      label: <Link to="/profile" style={{ fontFamily: monoFont, fontSize: '12px', textTransform: 'uppercase' }}>Filer Profile</Link>,
-      icon: <User size={15} style={{ color: brass }} />,
+      label: <Link to="/profile" style={{ fontFamily: monoFont, fontSize: '12px', textTransform: 'uppercase' }}>My Profile</Link>,
+      icon: <User size={15} style={{ color: inkSoft }} />,
     },
     {
       key: 'my-items',
-      label: <Link to="/my-items" style={{ fontFamily: monoFont, fontSize: '12px', textTransform: 'uppercase' }}>My Reported Cases</Link>,
-      icon: <FolderHeart size={15} style={{ color: ink }} />,
+      label: <Link to="/my-items" style={{ fontFamily: monoFont, fontSize: '12px', textTransform: 'uppercase' }}>My Reported Items</Link>,
+      icon: <FolderHeart size={15} style={{ color: inkSoft }} />,
     },
     {
       key: 'report-lost',
@@ -113,7 +94,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     },
     {
       key: 'logout',
-      label: <span onClick={handleLogout} style={{ fontFamily: monoFont, fontSize: '12px', textTransform: 'uppercase', fontWeight: 700 }}>Log Out</span>,
+      label: <span onClick={handleLogout} style={{ fontFamily: monoFont, fontSize: '12px', textTransform: 'uppercase' }}>Log Out</span>,
       icon: <LogOut size={15} />,
       danger: true,
     },
@@ -125,8 +106,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   return (
     <Layout style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: paper, fontFamily: bodyFont }}>
-      
-      {/* HEADER SECTION — Vintage Ledger Desk Banner */}
+      {/* HEADER SECTION */}
       <Header
         style={{
           position: 'sticky',
@@ -139,62 +119,45 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           backgroundColor: paperLight,
           backgroundImage: paperTexture,
           borderBottom: `2px solid ${ink}`,
-          paddingInline: outerPaddingInline,
-          height: `${HEADER_HEIGHT}px`,
-          lineHeight: `${HEADER_HEIGHT}px`,
           boxShadow: `0px 4px 0px ${paperDeep}`,
+          padding: screens.xs ? '0 16px' : '0 40px',
+          height: '64px',
         }}
       >
         {/* LOGO CONTAINER */}
-        <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
             <div
               style={{
-                width: '38px',
-                height: '38px',
-                border: `2px solid ${ink}`,
-                backgroundColor: paper,
+                width: '34px',
+                height: '34px',
+                borderRadius: 0,
+                backgroundColor: ink,
+                border: `1.5px solid ${ink}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                fontWeight: 800,
+                color: paperLight,
                 fontFamily: displayFont,
-                fontWeight: 700,
-                color: ink,
-                fontSize: '22px',
-                lineHeight: 1,
+                fontSize: '18px',
                 boxShadow: `2px 2px 0px ${brass}`,
-                flexShrink: 0,
               }}
             >
               U
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '3px' }}>
-              <span
-                style={{
-                  fontFamily: displayFont,
-                  fontSize: '22px',
-                  fontWeight: 700,
-                  color: ink,
-                  lineHeight: 1,
-                  textTransform: 'uppercase',
-                  letterSpacing: '-0.5px',
-                }}
-              >
-                Unstray
-              </span>
-              <span
-                style={{
-                  fontFamily: monoFont,
-                  fontSize: '9px',
-                  letterSpacing: '1px',
-                  color: inkSoft,
-                  textTransform: 'uppercase',
-                  lineHeight: 1,
-                }}
-              >
-                Claim Registry
-              </span>
-            </div>
+            <span
+              style={{
+                fontSize: '20px',
+                fontWeight: 800,
+                fontFamily: displayFont,
+                color: ink,
+                letterSpacing: '-0.5px',
+                textTransform: 'uppercase',
+              }}
+            >
+              Unstray
+            </span>
           </Link>
         </div>
 
@@ -208,115 +171,104 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               justifyContent: 'center',
               border: 'none',
               background: 'transparent',
-              fontFamily: monoFont,
               fontSize: '13px',
+              fontFamily: monoFont,
               textTransform: 'uppercase',
-              lineHeight: `${HEADER_HEIGHT - 4}px`,
-              height: '100%',
+              letterSpacing: '0.5px',
             }}
           >
-            <Menu.Item key="home" icon={<Home size={15} style={{ color: ink }} />} style={{ padding: '0 16px', margin: 0 }}>
+            <Menu.Item key="home" icon={<Home size={14} style={{ color: ink }} />}>
               <Link to="/" style={{ color: ink }}>Home</Link>
             </Menu.Item>
-            <Menu.Item key="lost-items" icon={<Tag size={15} style={{ color: claimRed }} />} style={{ padding: '0 16px', margin: 0 }}>
+            <Menu.Item key="lost-items" icon={<Search size={14} style={{ color: claimRed }} />}>
               <Link to="/items/lost" style={{ color: ink }}>Lost Items</Link>
             </Menu.Item>
-            <Menu.Item key="found-items" icon={<Tag size={15} style={{ color: claimGreen }} />} style={{ padding: '0 16px', margin: 0 }}>
+            <Menu.Item key="found-items" icon={<Search size={14} style={{ color: claimGreen }} />}>
               <Link to="/items/found" style={{ color: ink }}>Found Items</Link>
             </Menu.Item>
-            <Menu.Item key="all-items" icon={<Search size={15} style={{ color: brass }} />} style={{ padding: '0 16px', margin: 0 }}>
-              <Link to="/items" style={{ color: ink }}>All Directory</Link>
+            <Menu.Item key="all-items" icon={<Search size={14} style={{ color: brass }} />}>
+              <Link to="/items" style={{ color: ink }}>Directory</Link>
             </Menu.Item>
           </Menu>
         ) : null}
 
         {/* RIGHT SIDE ACTIONS (DESKTOP) */}
         {!screens.xs && !screens.sm ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', height: '100%' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             {isAuthenticated && user ? (
-              <Space size={20} align="center">
+              <Space size="middle">
                 <Dropdown menu={{ items: userMenuItems }} trigger={['click']} placement="bottomRight">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', ...headerControlStyle }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                     <Avatar 
-                      size={32}
+                      shape="square"
                       style={{ 
-                        backgroundColor: paperDeep, 
-                        color: ink,
-                        border: `1px solid ${ink}`,
-                        fontFamily: displayFont,
+                        backgroundColor: ink, 
+                        color: paperLight,
+                        fontFamily: monoFont,
                         fontWeight: 700,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        lineHeight: 1,
+                        border: `1px solid ${ink}`,
+                        borderRadius: 0
                       }}
                     >
                       {user.name ? user.name[0].toUpperCase() : 'U'}
                     </Avatar>
-                    <span style={{ fontFamily: monoFont, fontSize: '13px', fontWeight: 600, color: ink, textTransform: 'uppercase', lineHeight: 1 }}>
-                      {user.name}
-                    </span>
+                    <span style={{ fontWeight: 600, color: ink, fontFamily: monoFont, fontSize: '13px' }}>{user.name}</span>
                   </div>
                 </Dropdown>
                 <Link to="/report/lost">
-                  <button
+                  <Button 
+                    type="primary" 
+                    icon={<PlusCircle size={15} style={{ marginRight: '4px' }} />}
                     style={{
-                      ...headerControlStyle,
-                      gap: '8px',
+                      borderRadius: 0,
+                      backgroundColor: claimRed,
+                      borderColor: claimRed,
+                      color: paperLight,
                       fontFamily: monoFont,
                       fontWeight: 700,
                       fontSize: '11px',
                       textTransform: 'uppercase',
-                      paddingInline: '18px',
-                      backgroundColor: ink,
-                      color: paperLight,
-                      border: 'none',
-                      cursor: 'pointer',
-                      boxShadow: `2px 2px 0px ${brass}`,
+                      height: '36px',
+                      boxShadow: `2px 2px 0px ${ink}`,
                     }}
                   >
-                    <PlusCircle size={14} /> Report Item
-                  </button>
+                    Report Item
+                  </Button>
                 </Link>
               </Space>
             ) : (
-              <Space size={16} align="center">
+              <Space size="middle">
                 <Link to="/login">
-                  <button
-                    style={{
-                      ...headerControlStyle,
-                      fontFamily: monoFont,
-                      fontWeight: 700,
-                      fontSize: '12px',
+                  <Button 
+                    type="text" 
+                    style={{ 
+                      fontSize: '12px', 
+                      fontWeight: 600, 
+                      fontFamily: monoFont, 
                       textTransform: 'uppercase',
-                      paddingInline: '18px',
-                      backgroundColor: 'transparent',
-                      color: ink,
-                      border: `1px solid ${ink}`,
-                      cursor: 'pointer',
+                      color: ink 
                     }}
                   >
                     Log In
-                  </button>
+                  </Button>
                 </Link>
                 <Link to="/register">
-                  <button
-                    style={{
-                      ...headerControlStyle,
-                      fontFamily: monoFont,
-                      fontWeight: 700,
-                      fontSize: '12px',
+                  <Button 
+                    type="primary" 
+                    style={{ 
+                      fontWeight: 700, 
+                      fontFamily: monoFont, 
+                      fontSize: '12px', 
                       textTransform: 'uppercase',
-                      paddingInline: '18px',
+                      borderRadius: 0,
                       backgroundColor: ink,
+                      borderColor: ink,
                       color: paperLight,
-                      border: 'none',
-                      cursor: 'pointer',
-                      boxShadow: `2px 2px 0px ${brass}`,
+                      boxShadow: `2px 2px 0px ${brass}`
                     }}
                   >
                     Register
-                  </button>
+                  </Button>
                 </Link>
               </Space>
             )}
@@ -325,40 +277,39 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           /* MOBILE HAMBURGER BUTTON */
           <Button
             type="text"
-            icon={<MenuIcon size={24} style={{ color: ink }} />}
+            icon={<MenuIcon size={22} style={{ color: ink }} />}
             onClick={() => setIsMobileMenuOpen(true)}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '38px', height: '38px', padding: 0 }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           />
         )}
       </Header>
 
-      {/* MOBILE NAVIGATION DRAWER — Ledger File Style */}
+      {/* MOBILE NAVIGATION DRAWER */}
       <Drawer
-        title={
-          <div style={{ fontFamily: displayFont, fontSize: '18px', textTransform: 'uppercase', color: ink }}>
-            Unstray Ledger Menu
-          </div>
-        }
+        title={<span style={{ fontFamily: displayFont, textTransform: 'uppercase', color: ink, fontWeight: 700, fontSize: '18px' }}>Unstray Registry</span>}
         placement="right"
         onClose={() => setIsMobileMenuOpen(false)}
         open={isMobileMenuOpen}
         width={290}
-        style={{ fontFamily: bodyFont }}
         styles={{
-          header: { backgroundColor: paperLight, borderBottom: `2px solid ${ink}`, padding: '18px 24px' },
-          body: { backgroundColor: paperLight, padding: '24px', display: 'flex', flexDirection: 'column', height: '100%' },
+          header: { backgroundColor: paperLight, borderBottom: `2px solid ${ink}` },
+          body: { backgroundColor: paper, backgroundImage: paperTexture, padding: '20px' }
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' }}>
           <div>
             {isAuthenticated && user && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '20px', borderBottom: `2px dashed ${paperDeep}`, marginBottom: '20px' }}>
-                <Avatar size="large" style={{ backgroundColor: paperDeep, color: ink, border: `1px solid ${ink}`, fontFamily: displayFont, fontWeight: 700 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '16px', borderBottom: `1px dashed ${inkSoft}`, marginBottom: '20px' }}>
+                <Avatar 
+                  shape="square" 
+                  size="large" 
+                  style={{ backgroundColor: ink, color: paperLight, fontFamily: monoFont, fontWeight: 700, borderRadius: 0, border: `1px solid ${ink}` }}
+                >
                   {user.name ? user.name[0].toUpperCase() : 'U'}
                 </Avatar>
                 <div>
-                  <div style={{ fontFamily: displayFont, fontWeight: 700, fontSize: '16px', color: ink, textTransform: 'uppercase', lineHeight: 1.2 }}>{user.name}</div>
-                  <div style={{ fontFamily: monoFont, fontSize: '11px', color: inkSoft, marginTop: '3px' }}>{user.email}</div>
+                  <div style={{ fontWeight: 700, fontSize: '15px', fontFamily: displayFont, color: ink, textTransform: 'uppercase' }}>{user.name}</div>
+                  <div style={{ fontSize: '12px', color: inkSoft, fontFamily: monoFont }}>{user.email}</div>
                 </div>
               </div>
             )}
@@ -366,103 +317,103 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             <Menu
               mode="vertical"
               selectedKeys={[getActiveKey()]}
-              style={{ border: 'none', fontFamily: monoFont, fontSize: '13px', textTransform: 'uppercase', backgroundColor: 'transparent' }}
+              style={{ border: 'none', background: 'transparent', fontSize: '13px', fontFamily: monoFont, textTransform: 'uppercase' }}
               onClick={handleMobileLinkClick}
             >
-              <Menu.Item key="home" icon={<Home size={16} />} style={{ padding: '0 12px', margin: '0 0 4px 0' }}>
-                <Link to="/">Home Desk</Link>
+              <Menu.Item key="home" icon={<Home size={16} style={{ color: ink }} />}>
+                <Link to="/" style={{ color: ink }}>Home</Link>
               </Menu.Item>
-              <Menu.Item key="lost-items" icon={<Tag size={16} style={{ color: claimRed }} />} style={{ padding: '0 12px', margin: '0 0 4px 0' }}>
-                <Link to="/items/lost">Lost Items</Link>
+              <Menu.Item key="lost-items" icon={<Search size={16} style={{ color: claimRed }} />}>
+                <Link to="/items/lost" style={{ color: ink }}>Lost Items</Link>
               </Menu.Item>
-              <Menu.Item key="found-items" icon={<Tag size={16} style={{ color: claimGreen }} />} style={{ padding: '0 12px', margin: '0 0 4px 0' }}>
-                <Link to="/items/found">Found Items</Link>
+              <Menu.Item key="found-items" icon={<Search size={16} style={{ color: claimGreen }} />}>
+                <Link to="/items/found" style={{ color: ink }}>Found Items</Link>
               </Menu.Item>
-              <Menu.Item key="all-items" icon={<Search size={16} />} style={{ padding: '0 12px', margin: '0 0 4px 0' }}>
-                <Link to="/items">Browse Directory</Link>
+              <Menu.Item key="all-items" icon={<Search size={16} style={{ color: brass }} />}>
+                <Link to="/items" style={{ color: ink }}>Directory</Link>
               </Menu.Item>
 
               {isAuthenticated && (
                 <>
-                  <Menu.Divider style={{ margin: '12px 0' }} />
-                  <Menu.Item key="profile" icon={<User size={16} />} style={{ padding: '0 12px', margin: '0 0 4px 0' }}>
-                    <Link to="/profile">Filer Profile</Link>
+                  <Menu.Divider />
+                  <Menu.Item key="profile" icon={<User size={16} style={{ color: inkSoft }} />}>
+                    <Link to="/profile" style={{ color: ink }}>My Profile</Link>
                   </Menu.Item>
-                  <Menu.Item key="my-items" icon={<FolderHeart size={16} />} style={{ padding: '0 12px', margin: '0 0 4px 0' }}>
-                    <Link to="/my-items">My Reported Cases</Link>
+                  <Menu.Item key="my-items" icon={<FolderHeart size={16} style={{ color: inkSoft }} />}>
+                    <Link to="/my-items" style={{ color: ink }}>My Reported Items</Link>
                   </Menu.Item>
-                  <Menu.Item key="report-lost-mob" icon={<PlusCircle size={16} style={{ color: claimRed }} />} style={{ padding: '0 12px', margin: '0 0 4px 0' }}>
-                    <Link to="/report/lost">Report Lost</Link>
+                  <Menu.Item key="report-lost-mob" icon={<PlusCircle size={16} style={{ color: claimRed }} />}>
+                    <Link to="/report/lost" style={{ color: ink }}>Report Lost</Link>
                   </Menu.Item>
-                  <Menu.Item key="report-found-mob" icon={<PlusCircle size={16} style={{ color: claimGreen }} />} style={{ padding: '0 12px', margin: 0 }}>
-                    <Link to="/report/found">Report Found</Link>
+                  <Menu.Item key="report-found-mob" icon={<PlusCircle size={16} style={{ color: claimGreen }} />}>
+                    <Link to="/report/found" style={{ color: ink }}>Report Found</Link>
                   </Menu.Item>
                 </>
               )}
             </Menu>
           </div>
 
-          <div style={{ paddingTop: '20px' }}>
+          <div style={{ paddingBottom: '16px' }}>
             {isAuthenticated ? (
-              <button
+              <Button
+                danger
+                type="primary"
+                block
+                icon={<LogOut size={16} />}
                 onClick={handleLogout}
                 style={{
-                  width: '100%',
-                  height: '44px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
+                  borderRadius: 0,
+                  backgroundColor: claimRed,
+                  borderColor: claimRed,
                   fontFamily: monoFont,
                   fontWeight: 700,
                   fontSize: '12px',
                   textTransform: 'uppercase',
-                  backgroundColor: 'transparent',
-                  color: claimRed,
-                  border: `2px solid ${claimRed}`,
-                  cursor: 'pointer',
+                  height: '40px',
+                  boxShadow: `2px 2px 0px ${ink}`,
                 }}
               >
-                <LogOut size={16} /> Log Out Filer
-              </button>
+                Log Out
+              </Button>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <Link to="/login" style={{ width: '100%' }} onClick={handleMobileLinkClick}>
-                  <button
+                  <Button 
+                    block 
                     style={{
-                      width: '100%',
-                      height: '44px',
+                      borderRadius: 0,
+                      backgroundColor: paperLight,
+                      border: `1.5px solid ${ink}`,
+                      color: ink,
                       fontFamily: monoFont,
-                      fontWeight: 700,
+                      fontWeight: 600,
                       fontSize: '12px',
                       textTransform: 'uppercase',
-                      backgroundColor: 'transparent',
-                      color: ink,
-                      border: `1px solid ${ink}`,
-                      cursor: 'pointer',
+                      height: '40px',
                     }}
                   >
                     Log In
-                  </button>
+                  </Button>
                 </Link>
                 <Link to="/register" style={{ width: '100%' }} onClick={handleMobileLinkClick}>
-                  <button
+                  <Button 
+                    type="primary" 
+                    block 
                     style={{
-                      width: '100%',
-                      height: '44px',
+                      borderRadius: 0,
+                      backgroundColor: ink,
+                      borderColor: ink,
+                      color: paperLight,
                       fontFamily: monoFont,
                       fontWeight: 700,
                       fontSize: '12px',
                       textTransform: 'uppercase',
-                      backgroundColor: ink,
-                      color: paperLight,
-                      border: 'none',
-                      cursor: 'pointer',
+                      height: '40px',
                       boxShadow: `2px 2px 0px ${brass}`,
                     }}
                   >
-                    Register Filer
-                  </button>
+                    Register
+                  </Button>
                 </Link>
               </div>
             )}
@@ -475,36 +426,27 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         {children}
       </Content>
 
-      {/* FOOTER SECTION — Ledger Stamped Footer */}
+      {/* FOOTER SECTION */}
       <Footer
         style={{
+          textAlign: 'center',
           backgroundColor: ink,
-          borderTop: `6px solid ${brass}`,
-          paddingBlock: '32px',
-          paddingInline: outerPaddingInline,
-          color: paperLight,
+          backgroundImage: paperTexture,
+          borderTop: `2px solid ${ink}`,
+          padding: '28px 40px',
+          color: paperDeep,
           fontFamily: bodyFont,
         }}
       >
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexFlow: 'row wrap', justifyContent: 'space-between', alignItems: 'center', gap: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '28px', height: '28px', border: `1px solid ${paperLight}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: displayFont, fontWeight: 700, fontSize: '16px', flexShrink: 0 }}>
-              U
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-              <span style={{ fontFamily: displayFont, fontWeight: 700, color: paperLight, fontSize: '16px', letterSpacing: '0.5px', lineHeight: 1 }}>
-                UNSTRAY REGISTRY
-              </span>
-              <span style={{ fontFamily: monoFont, fontSize: '11px', color: '#B8C4C1', lineHeight: 1 }}>
-                © 2026. Official Community Claim &amp; Lost Property Desk.
-              </span>
-            </div>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexFlow: 'row wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontWeight: 800, color: paperLight, fontFamily: displayFont, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Unstray</span>
+            <span style={{ fontFamily: monoFont, fontSize: '12px', color: paperDeep }}>© 2026. Official Public Property Directory.</span>
           </div>
-
-          <Space size={24} style={{ fontFamily: monoFont, fontSize: '12px', textTransform: 'uppercase' }}>
-            <Link to="/items" style={{ color: '#B8C4C1' }}>Directory Index</Link>
-            <a href="#how" style={{ color: '#B8C4C1' }}>Filing Process</a>
-            <a href="#about" style={{ color: '#B8C4C1' }}>Privacy &amp; Security</a>
+          <Space size="large" style={{ fontFamily: monoFont, fontSize: '12px', textTransform: 'uppercase' }}>
+            <Link to="/items" style={{ color: paperLight }}>Search Directory</Link>
+            <a href="#how" style={{ color: paperLight }}>How It Works</a>
+            <a href="#about" style={{ color: paperLight }}>Privacy Protocol</a>
           </Space>
         </div>
       </Footer>

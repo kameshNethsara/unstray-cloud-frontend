@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { 
   Row, 
   Col, 
@@ -44,7 +44,6 @@ const paperTexture =
   "repeating-linear-gradient(135deg, rgba(32,48,58,0.025) 0px, rgba(32,48,58,0.025) 1px, transparent 1px, transparent 10px)";
 
 const Items: React.FC = () => {
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   
   const [items, setItems] = useState<Item[]>([]);

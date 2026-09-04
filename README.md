@@ -7,8 +7,8 @@ Unstray is a cloud-native, high-trust Lost & Found platform built for modern cam
 * **Student ID:** 241722037
 
 ## Deployment Information
-- **GCP Project ID:** `unstray-506517`
-- **Live Frontend URL:** `http://8.232.243.40/`
+- **GCP Project ID:** `unstray-507412`
+- **Live Frontend URL:** `http://34.49.5.133/`
 
 ## Architecture Overview
 
